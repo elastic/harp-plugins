@@ -1,0 +1,30 @@
+apiVersion: harp.elastic.co/terraformer/v1
+kind: AppRoleDefinition
+meta:
+  name: "harp-aws-deployer"
+  owner: "cloud-security@elastic.co"
+  description: "Generate AWS service account"
+  issues:
+    - https://github.com/elastic/harp-plugins/issues/123456
+    - https://github.com/elastic/harp-plugins/issues/123459
+spec:
+  selector:
+    platform: "security"
+    product: "harp"
+    version: "v1.0.0"
+    component: "s3-publisher"
+  namespaces:
+    # CSO Compliant paths
+    application:
+      - suffix: "containers/identities/recovery"
+        description: "Container sealing recovery key"
+        capabilities: ["read"]
+      - suffix: "containers/identities/harp-server"
+        description: "Container sealing consumer key"
+        capabilities: ["read"]
+
+  # No generated paths
+  custom:
+  - suffix: "{{.Values.aws.backend}}/sts/harp-deploy"
+    description: "Retrieve ephemeral AWS credentials for Harp container deployment"
+    capabilities: ["read"]

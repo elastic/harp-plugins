@@ -1,0 +1,75 @@
+// Copyright [2020] [Elastic]
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+// http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+syntax = "proto3";
+
+package harp.terraformer.v1;
+
+option csharp_namespace = "Harp.Terraformer.V1";
+option go_package = "github.com/elastic/cst/api/gen/go/harp/terraformer/v1;terraformerv1";
+option java_multiple_files = true;
+option java_outer_classname = "AppRoleProto";
+option java_package = "com.github.elastic.cloudsec.harp.terraformer.v1";
+option objc_class_prefix = "HTX";
+option php_namespace = "Harp\\Terraformer\\V1";
+
+// -----------------------------------------------------------------------------
+
+// AppRoleDefinition represents approle compiler definition.
+message AppRoleDefinition {
+  string api_version = 1;
+  string kind = 2;
+  AppRoleDefinitionMeta meta = 3;
+  AppRoleDefinitionSpec spec = 4;
+}
+
+// AppRoleDefinitionSpec handles approle specification details.
+message AppRoleDefinitionMeta {
+  string name = 1;
+  string owner = 2;
+  string description = 3;
+  repeated string issues = 4;
+}
+
+// AppRoleDefinitionSpec handles approle specification details.
+message AppRoleDefinitionSpec {
+  AppRoleDefinitionSelector selector = 1;
+  AppRoleDefinitionNamespaces namespaces = 2;
+  repeated AppRoleDefinitionSecretSuffix custom = 6;
+}
+
+// AppRoleDefinitionSelector defines secret path generator default values.
+message AppRoleDefinitionSelector {
+  repeated string environments = 1;
+  string platform = 2;
+  string product = 3;
+  string version = 4;
+  string component = 5;
+}
+
+// AppRoleDefinitionNamespaces defines secret path according to namespaces.
+message AppRoleDefinitionNamespaces {
+  repeated AppRoleDefinitionSecretSuffix infrastructure = 1;
+  repeated AppRoleDefinitionSecretSuffix platform = 2;
+  repeated AppRoleDefinitionSecretSuffix product = 3;
+  repeated AppRoleDefinitionSecretSuffix application = 4;
+  repeated AppRoleDefinitionSecretSuffix artifact = 5;
+}
+
+// AppRoleDefinitionSecret defines secret responsibilites.
+message AppRoleDefinitionSecretSuffix {
+  string suffix = 1;
+  string description = 2;
+  repeated string capabilities = 3;
+}
