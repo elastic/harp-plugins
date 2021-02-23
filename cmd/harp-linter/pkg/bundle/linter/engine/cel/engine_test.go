@@ -23,6 +23,7 @@ import (
 
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine"
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
+	"github.com/elastic/harp/pkg/bundle/secret"
 )
 
 func TestNew(t *testing.T) {
@@ -47,7 +48,7 @@ func TestNew(t *testing.T) {
 			args: args{
 				expressions: []string{
 					`p.match_path("app/production/test")`,
-					`p.has_secret("test")`,
+					`p.has_secret("test") && p.secret("test").is_base64()`,
 					`p.has_all_secrets(["test","test2"])`,
 					`p.is_cso_compliant()`,
 				},
@@ -73,6 +74,14 @@ func TestNew(t *testing.T) {
 			}
 		})
 	}
+}
+
+func mustPack(in interface{}) []byte {
+	out, err := secret.Pack(in)
+	if err != nil {
+		panic(err)
+	}
+	return out
 }
 
 func Test_ruleEngine_EvaluatePackage(t *testing.T) {
@@ -267,6 +276,49 @@ func Test_ruleEngine_EvaluatePackage(t *testing.T) {
 			args: args{
 				p: &bundlev1.Package{
 					Name: "app/qa/security/harp/v1.0.0/server/database/credentials",
+				},
+			},
+			wantErr: false,
+		},
+		{
+			name: "invalid: is_base64",
+			fields: fields{
+				expressions: []string{
+					`p.has_secret("test") && p.secret("test").is_base64()`,
+				},
+			},
+			args: args{
+				p: &bundlev1.Package{
+					Name: "app/qa/security",
+					Secrets: &bundlev1.SecretChain{
+						Data: []*bundlev1.KV{
+							{
+								Key: "test",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+		},
+		{
+			name: "valid: is_base64",
+			fields: fields{
+				expressions: []string{
+					`p.has_secret("test") && p.secret("test").is_base64()`,
+				},
+			},
+			args: args{
+				p: &bundlev1.Package{
+					Name: "app/qa/security/harp/v1.0.0/server/database/credentials",
+					Secrets: &bundlev1.SecretChain{
+						Data: []*bundlev1.KV{
+							{
+								Key:   "test",
+								Value: mustPack(""),
+							},
+						},
+					},
 				},
 			},
 			wantErr: false,

@@ -18,14 +18,18 @@
 package cel
 
 import (
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"strings"
 
+	validation "github.com/go-ozzo/ozzo-validation/v4"
 	"github.com/gobwas/glob"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
+	"github.com/elastic/harp/pkg/bundle/secret"
 	csov1 "github.com/elastic/harp/pkg/cso/v1"
 	htypes "github.com/elastic/harp/pkg/sdk/types"
 )
@@ -101,4 +105,65 @@ func celPackageIsCSOCompliant(lhs ref.Val) ref.Val {
 	}
 
 	return types.Bool(true)
+}
+
+func celPackageGetSecret(reg ref.TypeRegistry) func(lhs, rhs ref.Val) ref.Val {
+	return func(lhs, rhs ref.Val) ref.Val {
+		x, _ := lhs.ConvertToNative(reflect.TypeOf(&bundlev1.Package{}))
+		p := x.(*bundlev1.Package)
+		secretTyped := rhs.(types.String)
+		secretName := secretTyped.Value().(string)
+
+		// No secret data
+		if p.Secrets == nil || p.Secrets.Data == nil || len(p.Secrets.Data) == 0 {
+			return types.Bool(false)
+		}
+
+		// Look for secret name
+		for _, k := range p.Secrets.Data {
+			if strings.EqualFold(k.Key, secretName) {
+				return reg.NativeToValue(k)
+			}
+		}
+
+		return nil
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+func celValidatorBuilder(rules ...validation.Rule) func(ref.Val) ref.Val {
+	return func(lhs ref.Val) ref.Val {
+		x, _ := lhs.ConvertToNative(reflect.TypeOf(&bundlev1.KV{}))
+		p := x.(*bundlev1.KV)
+
+		var out string
+		if err := secret.Unpack(p.Value, &out); err != nil {
+			return types.Bool(false)
+		}
+
+		if err := validation.Validate(out, rules...); err != nil {
+			return types.Bool(false)
+		}
+
+		return types.Bool(true)
+	}
+}
+
+// -----------------------------------------------------------------------------
+
+var _ validation.Rule = (*jsonValidator)(nil)
+
+type jsonValidator struct{}
+
+func (v *jsonValidator) Validate(in interface{}) error {
+	// Process input
+	switch data := in.(type) {
+	case []byte:
+		if !json.Valid(data) {
+			return fmt.Errorf("invalid JSON payload")
+		}
+	}
+
+	return fmt.Errorf("unable to validate JSON for %T type", in)
 }
