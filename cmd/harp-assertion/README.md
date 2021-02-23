@@ -13,20 +13,6 @@ export PATH=<harp-repository-path>/tools/bin:$PATH
 mage
 ```
 
-## Install
-
-Stable release
-
-```sh
-brew install elastic/harp-plugins/harp-attestation
-```
-
-Built from source
-
-```sh
-brew install --from-source elastic/harp-plugins/harp-attestation
-```
-
 ## Create a transit key
 
 A Transit key is a key handled by Vault so that private key stay inside Vault

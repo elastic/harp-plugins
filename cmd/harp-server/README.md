@@ -26,13 +26,6 @@ So that containers could be consumed and exposed  :
 
 ## Install
 
-### From homebrew
-
-```sh
-brew tap elastic/harp-plugins
-brew install elastic/harp-plugins/harp-server
-```
-
 ### From source
 
 ```sh

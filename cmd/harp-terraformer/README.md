@@ -19,20 +19,6 @@ $ cd ..
 $ mage
 ```
 
-## Install
-
-Stable release
-
-```sh
-brew install elastic/harp-plugins/harp-terraformer
-```
-
-Built from source
-
-```sh
-brew install --from-source elastic/harp-plugins/harp-terraformer
-```
-
 ## Sample
 
 ### Request
