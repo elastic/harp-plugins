@@ -19,9 +19,9 @@ package cel
 
 import (
 	"reflect"
-	"regexp"
 	"strings"
 
+	"github.com/gobwas/glob"
 	"github.com/google/cel-go/common/types"
 	"github.com/google/cel-go/common/types/ref"
 
@@ -37,7 +37,7 @@ func celPackageMatchPath(lhs, rhs ref.Val) ref.Val {
 	pathTyped := rhs.(types.String)
 	path := pathTyped.Value().(string)
 
-	return types.Bool(regexp.MustCompile(path).MatchString(p.Name))
+	return types.Bool(glob.MustCompile(path).Match(p.Name))
 }
 
 func celPackageHasSecret(lhs, rhs ref.Val) ref.Val {

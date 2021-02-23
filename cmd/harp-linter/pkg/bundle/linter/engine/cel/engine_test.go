@@ -121,7 +121,7 @@ func Test_ruleEngine_EvaluatePackage(t *testing.T) {
 			name: "valid: match_path regex",
 			fields: fields{
 				expressions: []string{
-					`p.match_path("app/(production|staging)/test")`,
+					`p.match_path("app/{production,staging}/test")`,
 				},
 			},
 			args: args{

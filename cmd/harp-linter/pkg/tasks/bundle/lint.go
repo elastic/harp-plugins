@@ -59,7 +59,7 @@ func (t *LintTask) Run(ctx context.Context) error {
 	}
 
 	if err := linter.Evaluate(ctx, b, spec); err != nil {
-		return fmt.Errorf("unbale to validate given bundle: %w", err)
+		return fmt.Errorf("unable to validate given bundle: %w", err)
 	}
 
 	// No error
