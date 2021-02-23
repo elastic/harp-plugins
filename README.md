@@ -16,4 +16,5 @@ plugins are SDK usage samples.
 
 * [harp-assertion](https://github.com/elastic/harp-plugins/tree/main/cmd/harp-assertion) - Create JWT Assertion for decentralized authentication purpose.
 * [harp-aws](https://github.com/elastic/harp-plugins/tree/main/cmd/harp-aws) - AWS related container operations (Container identity via KMS, S3 publication, Cloud Secret Storage management).
+* [harp-linter](https://github.com/elastic/harp-plugins/tree/main/cmd/harp-linter) - Use CEL language to add Bundle constraints.
 * [harp-yubikey](https://github.com/elastic/harp-plugins/tree/main/cmd/harp-yubikey) - Container identity management via a Yubikey and retired key management feature.
