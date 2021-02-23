@@ -19,11 +19,23 @@ For complete language specification, consult this repository - <https://github.c
 
 ### Extensions
 
+#### Package
+
 * `p` exposes the current package that match the `path` filter;
 * `p.match_path(string)` return true or false if current package match the given [glob](https://github.com/gobwas/glob) path filter;
 * `p.is_cso_compliant()` return true or false according to CSO Compliance state of the current package;
 * `p.has_secret(string)` return true or false according to secret key `string` existence;
 * `p.has_all_secrets(list)` return true or false if package has all given secret keys;
+
+#### Secret
+
+* `p.secret(string)` to retrieve the named secret from the given package
+* `p.secret(string).is_base64()` check if value is a valid Base64 string
+* `p.secret(string).is_required()` check if value is not empty / blank
+* `p.secret(string).is_url()` check if value is a valid URL string
+* `p.secret(string).is_uuid()` check if value is a valid UUID string
+* `p.secret(string).is_email()` check if value is a valid Email string
+* `p.secret(string).is_json()` check if value is a valid JSON string
 
 ### RuleSet
 
@@ -47,7 +59,16 @@ spec:
       # CEL constraints expressions (implicit AND between all contraints)
       constraints:
         - p.is_cso_compliant()
-        - p.match_path("app/*")
+
+    # Rule identifier used to violation report
+    - name: HARP-SRV-0002
+      # Human readable definition of the rule.
+      description: Production application should have a JWK defined
+      # Package path matcher.
+      path: "app/production/**/oidc"
+      # CEL constraints expressions (implicit AND between all contraints)
+      constraints:
+        - p.has_secret("jwk") && p.secret("jwk").is_base64()
 ```
 
 ## Sample
