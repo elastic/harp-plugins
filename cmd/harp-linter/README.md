@@ -11,20 +11,6 @@ export PATH=<harp-repository-path>/tools/bin:$PATH
 mage
 ```
 
-## Install
-
-Stable release
-
-```sh
-brew install elastic/harp-plugins/harp-linter
-```
-
-Built from source
-
-```sh
-brew install --from-source elastic/harp-plugins/harp-linter
-```
-
 ## Constraint Language
 
 In order to produce package constraints, `harp-linter` uses [CEL](https://github.com/google/cel-go).

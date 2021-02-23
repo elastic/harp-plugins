@@ -14,20 +14,6 @@ export PATH=<harp-repository-path>/tools/bin:$PATH
 mage
 ```
 
-## Install
-
-Stable release
-
-```sh
-brew install elastic/harp-plugins/harp-aws
-```
-
-Built from source
-
-```sh
-brew install --from-source elastic/harp-plugins/harp-aws
-```
-
 ## Sample
 
 ### Generate an AWS KMS protected identity
