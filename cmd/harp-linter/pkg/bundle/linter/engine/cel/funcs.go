@@ -74,9 +74,17 @@ func celPackageHasAllSecrets(lhs, rhs ref.Val) ref.Val {
 
 	sa := htypes.StringArray(secretNames)
 
-	// Look for secret name
+	secretMap := map[string]*bundlev1.KV{}
 	for _, k := range p.Secrets.Data {
 		if !sa.Contains(k.Key) {
+			return types.Bool(false)
+		}
+		secretMap[k.Key] = k
+	}
+
+	// Look for secret name
+	for _, k := range secretNames {
+		if _, ok := secretMap[k]; !ok {
 			return types.Bool(false)
 		}
 	}

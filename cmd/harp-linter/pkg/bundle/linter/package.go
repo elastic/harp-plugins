@@ -22,7 +22,6 @@ import (
 	"encoding/base64"
 	"errors"
 	"fmt"
-	"regexp"
 
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/protobuf/proto"
@@ -31,6 +30,7 @@ import (
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine"
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine/cel"
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
+	"github.com/gobwas/glob"
 )
 
 // Validate bundle patch.
@@ -98,7 +98,7 @@ func Evaluate(ctx context.Context, b *bundlev1.Bundle, spec *linterv1.RuleSet) e
 	// Process each rule
 	for _, r := range spec.Spec.Rules {
 		// Complie path matcher
-		rePathMatcher, err := regexp.Compile(r.Path)
+		pathMatcher, err := glob.Compile(r.Path)
 		if err != nil {
 			return fmt.Errorf("unable to compile path matcher: %w", err)
 		}
@@ -109,6 +109,9 @@ func Evaluate(ctx context.Context, b *bundlev1.Bundle, spec *linterv1.RuleSet) e
 			return fmt.Errorf("unable to prepare evaluation context: %w", err)
 		}
 
+		// A rule must match at least one time.
+		matchOnce := false
+
 		// For each package
 		for _, p := range b.Packages {
 			if p == nil {
@@ -117,7 +120,9 @@ func Evaluate(ctx context.Context, b *bundlev1.Bundle, spec *linterv1.RuleSet) e
 			}
 
 			// If package match the path filter.
-			if rePathMatcher.MatchString(p.Name) {
+			if pathMatcher.Match(p.Name) {
+				matchOnce = true
+
 				errEval := vm.EvaluatePackage(ctx, p)
 				if errEval != nil {
 					if errors.Is(errEval, engine.ErrRuleNotValid) {
@@ -126,6 +131,11 @@ func Evaluate(ctx context.Context, b *bundlev1.Bundle, spec *linterv1.RuleSet) e
 					return fmt.Errorf("unexpected error occurred during constraints evaluation: %w", errEval)
 				}
 			}
+		}
+
+		// Check matching constraint
+		if !matchOnce {
+			return fmt.Errorf("rule '%s' didn't match any packages", r.Name)
 		}
 	}
 

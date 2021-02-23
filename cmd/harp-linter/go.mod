@@ -8,6 +8,7 @@ require (
 	github.com/common-nighthawk/go-figure v0.0.0-20200609044655-c4b36f998cf2
 	github.com/elastic/harp v0.1.12
 	github.com/fatih/color v1.10.0
+	github.com/gobwas/glob v0.2.3
 	github.com/golang/protobuf v1.4.3
 	github.com/google/cel-go v0.7.2
 	github.com/magefile/mage v1.11.0
