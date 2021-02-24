@@ -23,6 +23,7 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/gobwas/glob"
 	"golang.org/x/crypto/blake2b"
 	"google.golang.org/protobuf/proto"
 
@@ -30,7 +31,6 @@ import (
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine"
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine/cel"
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
-	"github.com/gobwas/glob"
 )
 
 // Validate bundle patch.

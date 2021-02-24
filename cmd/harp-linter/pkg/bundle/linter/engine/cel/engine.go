@@ -22,23 +22,14 @@ import (
 	"errors"
 	"fmt"
 
-	validation "github.com/go-ozzo/ozzo-validation/v4"
-	"github.com/go-ozzo/ozzo-validation/v4/is"
 	"github.com/google/cel-go/cel"
 	"github.com/google/cel-go/checker/decls"
-	"github.com/google/cel-go/common/types"
-	"github.com/google/cel-go/ext"
-	"github.com/google/cel-go/interpreter/functions"
-	exprpb "google.golang.org/genproto/googleapis/api/expr/v1alpha1"
+	celext "github.com/google/cel-go/ext"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine"
+	"github.com/elastic/harp-plugins/cmd/harp-linter/pkg/bundle/linter/engine/cel/ext"
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
-)
-
-var (
-	harpPackageObjectType = decls.NewObjectType("harp.bundle.v1.Package")
-	harpKVObjectType      = decls.NewObjectType("harp.bundle.v1.KV")
 )
 
 // -----------------------------------------------------------------------------
@@ -48,137 +39,13 @@ func New(expressions []string) (engine.PackageLinter, error) {
 	// Prepare CEL Environment
 	env, err := cel.NewEnv(
 		cel.Types(&bundlev1.Bundle{}, &bundlev1.Package{}, &bundlev1.SecretChain{}, &bundlev1.KV{}),
-		cel.Declarations(
-			decls.NewVar("p", harpPackageObjectType),
-			decls.NewFunction("match_path",
-				decls.NewInstanceOverload("match_path",
-					[]*exprpb.Type{harpPackageObjectType, decls.String},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("has_secret",
-				decls.NewInstanceOverload("has_secret",
-					[]*exprpb.Type{harpPackageObjectType, decls.String},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("has_all_secrets",
-				decls.NewInstanceOverload("has_all_secrets",
-					[]*exprpb.Type{harpPackageObjectType, decls.NewListType(decls.String)},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_cso_compliant",
-				decls.NewInstanceOverload("is_cso_compliant",
-					[]*exprpb.Type{harpPackageObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("secret",
-				decls.NewInstanceOverload("secret",
-					[]*exprpb.Type{harpPackageObjectType, decls.String},
-					harpKVObjectType,
-				),
-			),
-			decls.NewFunction("is_base64",
-				decls.NewInstanceOverload("is_base64",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_required",
-				decls.NewInstanceOverload("is_required",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_url",
-				decls.NewInstanceOverload("is_url",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_uuid",
-				decls.NewInstanceOverload("is_uuid",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_email",
-				decls.NewInstanceOverload("is_email",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-			decls.NewFunction("is_json",
-				decls.NewInstanceOverload("is_json",
-					[]*exprpb.Type{harpKVObjectType},
-					decls.Bool,
-				),
-			),
-		),
-		ext.Strings(),
-		ext.Encoders(),
+		ext.Packages(),
+		ext.Secrets(),
+		celext.Strings(),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("unable to prepare CEL engine environment: %w", err)
 	}
-
-	// Registter types
-	reg, err := types.NewRegistry(
-		&bundlev1.KV{},
-	)
-	if err != nil {
-		return nil, fmt.Errorf("unable to register types: %w", err)
-	}
-
-	// Functions
-	funcs := cel.Functions(
-		&functions.Overload{
-			Operator: "match_path",
-			Binary:   celPackageMatchPath,
-		},
-		&functions.Overload{
-			Operator: "has_secret",
-			Binary:   celPackageHasSecret,
-		},
-		&functions.Overload{
-			Operator: "has_all_secrets",
-			Binary:   celPackageHasAllSecrets,
-		},
-		&functions.Overload{
-			Operator: "is_cso_compliant",
-			Unary:    celPackageIsCSOCompliant,
-		},
-		&functions.Overload{
-			Operator: "secret",
-			Binary:   celPackageGetSecret(reg),
-		},
-		&functions.Overload{
-			Operator: "is_base64",
-			Unary:    celValidatorBuilder(is.Base64),
-		},
-		&functions.Overload{
-			Operator: "is_required",
-			Unary:    celValidatorBuilder(validation.Required),
-		},
-		&functions.Overload{
-			Operator: "is_url",
-			Unary:    celValidatorBuilder(is.URL),
-		},
-		&functions.Overload{
-			Operator: "is_uuid",
-			Unary:    celValidatorBuilder(is.UUID),
-		},
-		&functions.Overload{
-			Operator: "is_email",
-			Unary:    celValidatorBuilder(is.EmailFormat),
-		},
-		&functions.Overload{
-			Operator: "is_json",
-			Unary:    celValidatorBuilder(&jsonValidator{}),
-		},
-	)
 
 	// Assemble the complete ruleset
 	ruleset := make([]cel.Program, 0, len(expressions))
@@ -202,7 +69,7 @@ func New(expressions []string) (engine.PackageLinter, error) {
 		}
 
 		// Compile the program
-		p, err := env.Program(ast, funcs)
+		p, err := env.Program(ast)
 		if err != nil {
 			return nil, fmt.Errorf("error while creating CEL program: %w", err)
 		}
