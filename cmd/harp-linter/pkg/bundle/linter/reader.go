@@ -24,10 +24,9 @@ import (
 
 	"google.golang.org/protobuf/encoding/protojson"
 
+	linterv1 "github.com/elastic/harp-plugins/cmd/harp-linter/api/gen/go/harp/linter/v1"
 	"github.com/elastic/harp/pkg/sdk/convert"
 	"github.com/elastic/harp/pkg/sdk/types"
-
-	linterv1 "github.com/elastic/harp-plugins/cmd/harp-linter/api/gen/go/harp/linter/v1"
 )
 
 // YAML a given reader in order to extract a BundlePatch sepcification

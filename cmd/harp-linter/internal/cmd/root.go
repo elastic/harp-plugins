@@ -56,6 +56,7 @@ var mainCmd = func() *cobra.Command {
 	cmd.AddCommand(configcmd.NewConfigCommand(conf, envPrefix))
 
 	cmd.AddCommand(bundleCmd())
+	cmd.AddCommand(rulesetCmd())
 
 	// Return command
 	return cmd

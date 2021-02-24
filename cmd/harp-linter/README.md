@@ -143,3 +143,93 @@ echo '{"app/qa/security/harp/v1.0.0/server/database/credentials":{}}' \
   | harp-linter bundle lint --spec test/fixtures/ruleset/valid/database-secret-validator.yaml
 {"level":"fatal","@timestamp":"2021-02-23T10:31:24.287Z","@caller":"cobra@v1.1.3/command.go:856","@message":"unable to execute task","@appName":"harp-bundle-lint","@version":"","@revision":"8ebf40d","@appID":"7pflS7bCAAsDcAiPJWm36pypWY3nHhqOQwCc9Vp1ABCm8ZUWbmGinGL5zbP1EWvn","@fields":{"error":"unable to validate given bundle: package 'app/qa/security/harp/v1.0.0/server/database/credentials' doesn't validate rule 'HARP-SRV-0002'"}}
 ```
+
+### Generate a ruleset from a bundle
+
+It will use the input bundle structure to generate a `RuleSet`.
+
+```sh
+harp-linter ruleset from-bundle --in customer.bundle
+```
+
+```yaml
+api_version: harp.elastic.co/linter/v1
+kind: RuleSet
+meta:
+  description: Generated from bundle content
+  name: vjz70BPFJuQhm_7quRGNt1ybocQU6DeXCn8h1o4aPm80CI4pM8lNwVBTDqH8SpW0W1r-8dXSVQK67pO-vtgS_Q
+spec:
+  rules:
+  - constraints:
+    - p.has_secret("API_KEY")
+    name: LINT-vjz70B-1
+    path: app/production/customer1/ece/v1.0.0/adminconsole/authentication/otp/okta_api_key
+  - constraints:
+    - p.has_secret("host")
+    - p.has_secret("port")
+    - p.has_secret("options")
+    - p.has_secret("username")
+    - p.has_secret("password")
+    - p.has_secret("dbname")
+    name: LINT-vjz70B-2
+    path: app/production/customer1/ece/v1.0.0/adminconsole/database/usage_credentials
+  - constraints:
+    - p.has_secret("cookieEncryptionKey")
+    - p.has_secret("sessionSaltSeed")
+    - p.has_secret("jwtHmacKey")
+    name: LINT-vjz70B-3
+    path: app/production/customer1/ece/v1.0.0/adminconsole/http/session
+  - constraints:
+    - p.has_secret("API_KEY")
+    name: LINT-vjz70B-4
+    path: app/production/customer1/ece/v1.0.0/adminconsole/mailing/sender/mailgun_api_key
+  - constraints:
+    - p.has_secret("emailHashPepperSeedKey")
+    name: LINT-vjz70B-5
+    path: app/production/customer1/ece/v1.0.0/adminconsole/privacy/anonymizer
+  - constraints:
+    - p.has_secret("host")
+    - p.has_secret("port")
+    - p.has_secret("options")
+    - p.has_secret("username")
+    - p.has_secret("password")
+    - p.has_secret("dbname")
+    name: LINT-vjz70B-6
+    path: app/production/customer1/ece/v1.0.0/userconsole/database/usage_credentials
+  - constraints:
+    - p.has_secret("privateKey")
+    - p.has_secret("publicKey")
+    name: LINT-vjz70B-7
+    path: app/production/customer1/ece/v1.0.0/userconsole/http/certificate
+  - constraints:
+    - p.has_secret("cookieEncryptionKey")
+    - p.has_secret("sessionSaltSeed")
+    - p.has_secret("jwtHmacKey")
+    name: LINT-vjz70B-8
+    path: app/production/customer1/ece/v1.0.0/userconsole/http/session
+  - constraints:
+    - p.has_secret("user")
+    - p.has_secret("password")
+    name: LINT-vjz70B-9
+    path: infra/aws/essp-customer1/us-east-1/rds/adminconsole/accounts/root_credentials
+  - constraints:
+    - p.has_secret("API_KEY")
+    - p.has_secret("ca.pem")
+    name: LINT-vjz70B-10
+    path: platform/production/customer1/us-east-1/billing/recurly/vendor_api_key
+  - constraints:
+    - p.has_secret("username")
+    - p.has_secret("password")
+    name: LINT-vjz70B-11
+    path: platform/production/customer1/us-east-1/postgresql/admiconsole/admin_credentials
+  - constraints:
+    - p.has_secret("username")
+    - p.has_secret("password")
+    name: LINT-vjz70B-12
+    path: platform/production/customer1/us-east-1/zookeeper/accounts/admin_credentials
+  - constraints:
+    - p.has_secret("privateKey")
+    - p.has_secret("publicKey")
+    name: LINT-vjz70B-13
+    path: product/ece/v1.0.0/artifact/signature/key
+```
