@@ -28,7 +28,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 
-	cloudsession "github.com/elastic/harp/pkg/cloud/aws/session"
+	cloudsession "github.com/elastic/harp-plugins/cmd/harp-aws/pkg/cloud/aws/session"
 	"github.com/elastic/harp/pkg/container"
 	"github.com/elastic/harp/pkg/tasks"
 )
