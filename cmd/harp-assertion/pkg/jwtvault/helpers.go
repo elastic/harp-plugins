@@ -43,7 +43,7 @@ type keyVersion struct {
 // -----------------------------------------------------------------------------
 
 // GetPublicKey returns parsed public key
-func GetPublicKey(vaultClient *api.Client, transitPath, keyName string) (interface{}, uint, error) {
+func GetPublicKey(vaultClient *api.Client, transitPath, keyName string) (publicKey interface{}, version uint, err error) {
 	// Check arguments
 	if vaultClient == nil {
 		return nil, 0, fmt.Errorf("vault client must not be nil")
