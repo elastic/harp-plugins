@@ -32,12 +32,12 @@ func Format(in fmt.Stringer) ([]byte, error) {
 	s := in.String()
 
 	// ...but leave whitespace between resources
-	s = strings.Replace(s, "}\nresource", "}\n\nresource", -1)
+	s = strings.ReplaceAll(s, "}\nresource", "}\n\nresource")
 
 	// Workaround HCL insanity kubernetes/kops#6359: quotes are _not_ escaped in quotes (huh?)
 	// This hits the file function
-	s = strings.Replace(s, "(\\\"", "(\"", -1)
-	s = strings.Replace(s, "\\\")", "\")", -1)
+	s = strings.ReplaceAll(s, "(\\\"", "(\"")
+	s = strings.ReplaceAll(s, "\\\")", "\")")
 
 	// Apply Terraform style (alignment etc.)
 	var err error

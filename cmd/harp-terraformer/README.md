@@ -12,10 +12,6 @@ A `harp` plugin used to generate Terraform files for `agent` and `service` in CS
 
 ```sh
 export PATH=<harp-repository-path>/tools/bin:$PATH
-# To generate protobuf stubs
-$ cd api
-$ task
-$ cd ..
 $ mage
 ```
 

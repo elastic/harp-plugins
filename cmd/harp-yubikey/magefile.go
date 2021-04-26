@@ -87,7 +87,7 @@ func Compile() error {
 	}
 
 	// Build artifact
-	return golang.Build("harp-yubikey", "github.com/elastic/harp-plugins/cmd/harp-yubikey", version)()
+	return golang.Build("harp-yubikey", "github.com/elastic/harp-plugins/cmd/harp-yubikey", version, golang.WithCGO())()
 }
 
 // Release
