@@ -81,7 +81,7 @@ func (b *msAzureBlobBackend) GetObject(ctx context.Context, path string) (*Objec
 
 	readCloser, err := blobReference.Get(nil)
 	if err != nil {
-		return nil, fmt.Errorf("azure: unbale to oper content reader for '%s': %w", objectPath, err)
+		return nil, fmt.Errorf("azure: unbale to open content reader for '%s': %w", objectPath, err)
 	}
 
 	// Assemble response

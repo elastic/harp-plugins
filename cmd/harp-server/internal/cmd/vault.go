@@ -72,7 +72,7 @@ func runVaultServer(ctx context.Context, params *vaultParams) {
 		Debug:           conf.Debug.Enable,
 		Name:            "harp-server-vault",
 		Version:         version.Version,
-		Revision:        version.Revision,
+		Revision:        version.Commit,
 		Instrumentation: conf.Instrumentation,
 		Network:         conf.Vault.Network,
 		Address:         conf.Vault.Listen,

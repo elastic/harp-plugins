@@ -64,7 +64,7 @@ func runGRPCServer(cmd *cobra.Command, args []string) {
 		Debug:           conf.Debug.Enable,
 		Name:            "harp-server-grpc",
 		Version:         version.Version,
-		Revision:        version.Revision,
+		Revision:        version.Commit,
 		Instrumentation: conf.Instrumentation,
 		Network:         conf.GRPC.Network,
 		Address:         conf.GRPC.Listen,
