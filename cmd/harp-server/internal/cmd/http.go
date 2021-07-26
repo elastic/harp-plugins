@@ -68,7 +68,7 @@ func runHTTPServer(cmd *cobra.Command, args []string) {
 		Debug:           conf.Debug.Enable,
 		Name:            "harp-server-http",
 		Version:         version.Version,
-		Revision:        version.Revision,
+		Revision:        version.Commit,
 		Instrumentation: conf.Instrumentation,
 		Network:         conf.HTTP.Network,
 		Address:         conf.HTTP.Listen,
