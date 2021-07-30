@@ -35,3 +35,11 @@ exceptions:
   - github.com/hashicorp/vault/...
   # BSD-2 - https://github.com/magiconair/properties/blob/master/LICENSE.md
   - github.com/magiconair/properties
+  # MPL-2.0 - https://github.com/hashicorp/serf/blob/master/LICENSE
+  - github.com/hashicorp/serf/coordinate
+  # MPL-2.0 - https://github.com/hashicorp/consul/blob/main/LICENSE
+  - github.com/hashicorp/consul/api
+  # MPL-2.0 - https://github.com/hashicorp/go-immutable-radix/blob/master/LICENSE
+  - github.com/hashicorp/go-immutable-radix
+  # MPL-2.0 - https://github.com/hashicorp/golang-lru/blob/master/LICENSE
+  - github.com/hashicorp/golang-lru/simplelru
