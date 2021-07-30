@@ -34,17 +34,15 @@ import (
 )
 
 type ExtractTask struct {
-	_               struct{}
-	ContainerWriter tasks.WriterProvider
-	BasePaths       []string
-	Store           kv.Store
+	_                       struct{}
+	ContainerWriter         tasks.WriterProvider
+	BasePaths               []string
+	Store                   kv.Store
+	LastPathItemAsSecretKey bool
 }
 
 func (t *ExtractTask) Run(ctx context.Context) error {
-	// Prepare a bundle
-	b := &bundlev1.Bundle{
-		Packages: make([]*bundlev1.Package, 0),
-	}
+	packages := map[string]*bundlev1.Package{}
 
 	// For each base path
 	for _, basePath := range t.BasePaths {
@@ -56,31 +54,42 @@ func (t *ExtractTask) Run(ctx context.Context) error {
 
 		// Prepare a package using each item
 		for _, item := range items {
-			// Prepare secret list
-			chain := &bundlev1.SecretChain{
-				Version:         uint32(0),
-				Data:            make([]*bundlev1.KV, 0),
-				NextVersion:     nil,
-				PreviousVersion: nil,
+			// Extract packageName
+			packageName := t.extractPackageName(item.Key)
+
+			// Check if packages is already instancied
+			p, ok := packages[packageName]
+			if !ok {
+				p = &bundlev1.Package{
+					Name: packageName,
+					Secrets: &bundlev1.SecretChain{
+						Version:         uint32(0),
+						Data:            make([]*bundlev1.KV, 0),
+						NextVersion:     nil,
+						PreviousVersion: nil,
+					},
+				}
 			}
 
 			// Try to extract value as a json map
 			var secretData map[string]interface{}
 			errJSON := json.Unmarshal(item.Value, &secretData)
 			if errJSON != nil {
-				log.For(ctx).Warn("data could not be decoded as json", zap.Error(errJSON))
+				log.For(ctx).Debug("data could not be decoded as json", zap.Error(errJSON))
 
 				// Create an arbitrary secret key
-				secretKey := strings.TrimPrefix(item.Key, kv.GetDirectory(item.Key))
+				secretKey := strings.TrimPrefix(strings.TrimPrefix(item.Key, kv.GetDirectory(item.Key)), "/")
+
+				log.For(ctx).Debug("Creating secret for package", zap.String("package", packageName), zap.String("secret", secretKey))
 
 				// Pack secret value
-				s, errPack := t.packSecret(secretKey, item.Value)
+				s, errPack := t.packSecret(secretKey, string(item.Value))
 				if errPack != nil {
 					return fmt.Errorf("unable to pack secret value for path '%s' with key '%s' : %w", item.Key, secretKey, errPack)
 				}
 
 				// Add secret to package
-				chain.Data = append(chain.Data, s)
+				p.Secrets.Data = append(p.Secrets.Data, s)
 			} else {
 				// Iterate over secret bundle
 				for k, v := range secretData {
@@ -91,21 +100,23 @@ func (t *ExtractTask) Run(ctx context.Context) error {
 					}
 
 					// Add secret to package
-					chain.Data = append(chain.Data, s)
+					p.Secrets.Data = append(p.Secrets.Data, s)
 				}
 			}
 
-			// Prepare the secret package
-			pack := &bundlev1.Package{
-				Labels:      map[string]string{},
-				Annotations: map[string]string{},
-				Name:        item.Key,
-				Secrets:     chain,
-			}
-
-			// Add to bundle
-			b.Packages = append(b.Packages, pack)
+			// Update package map
+			packages[packageName] = p
 		}
+	}
+
+	// Prepare a bundle
+	b := &bundlev1.Bundle{
+		Packages: make([]*bundlev1.Package, 0),
+	}
+
+	// Copy package to bundle
+	for _, p := range packages {
+		b.Packages = append(b.Packages, p)
 	}
 
 	// Create container
@@ -136,4 +147,13 @@ func (t *ExtractTask) packSecret(key string, value interface{}) (*bundlev1.KV, e
 		Type:  fmt.Sprintf("%T", value),
 		Value: payload,
 	}, nil
+}
+
+func (t *ExtractTask) extractPackageName(key string) string {
+	if !t.LastPathItemAsSecretKey {
+		return strings.TrimPrefix(strings.TrimSuffix(key, "/"), "/")
+	}
+
+	// Extract directory
+	return strings.TrimPrefix(kv.GetDirectory(key), "/")
 }

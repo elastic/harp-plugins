@@ -33,8 +33,9 @@ import (
 // -----------------------------------------------------------------------------
 
 type fromConsulParams struct {
-	outputPath string
-	basePaths  []string
+	outputPath           string
+	basePaths            []string
+	lastPathItemAsSecret bool
 }
 
 var fromConsulCmd = func() *cobra.Command {
@@ -55,6 +56,7 @@ var fromConsulCmd = func() *cobra.Command {
 	// Add parameters
 	cmd.Flags().StringVar(&params.outputPath, "out", "-", "Container output path ('-' for stdout)")
 	cmd.Flags().StringSliceVar(&params.basePaths, "paths", []string{}, "Exported base paths")
+	cmd.Flags().BoolVarP(&params.lastPathItemAsSecret, "last-path-item-as-secret-key", "k", false, "Use the last path element as secret key")
 
 	return cmd
 }
@@ -72,9 +74,10 @@ func runFromConsul(ctx context.Context, params *fromConsulParams) {
 
 	// Delegate to task
 	t := &from.ExtractTask{
-		Store:           consul.Store(client),
-		ContainerWriter: cmdutil.FileWriter(params.outputPath),
-		BasePaths:       params.basePaths,
+		Store:                   consul.Store(client),
+		ContainerWriter:         cmdutil.FileWriter(params.outputPath),
+		BasePaths:               params.basePaths,
+		LastPathItemAsSecretKey: params.lastPathItemAsSecret,
 	}
 
 	// Run the task

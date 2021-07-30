@@ -34,8 +34,10 @@ import (
 // -----------------------------------------------------------------------------
 
 type fromZookeeperParams struct {
-	outputPath  string
-	basePaths   []string
+	outputPath           string
+	basePaths            []string
+	lastPathItemAsSecret bool
+
 	endpoints   []string
 	dialTimeout time.Duration
 }
@@ -58,6 +60,7 @@ var fromZookeeperCmd = func() *cobra.Command {
 	// Add parameters
 	cmd.Flags().StringArrayVar(&params.endpoints, "endpoints", []string{"127.0.0.1:2181"}, "Zookeeper client endpoints")
 	cmd.Flags().DurationVar(&params.dialTimeout, "dial-timeout", 15*time.Second, "Zookeeper client dial timeout")
+	cmd.Flags().BoolVarP(&params.lastPathItemAsSecret, "last-path-item-as-secret-key", "k", false, "Use the last path element as secret key")
 
 	return cmd
 }
@@ -72,9 +75,10 @@ func runFromZookeeper(ctx context.Context, params *fromZookeeperParams) {
 
 	// Delegate to task
 	t := &from.ExtractTask{
-		Store:           zookeeper.Store(client),
-		ContainerWriter: cmdutil.FileWriter(params.outputPath),
-		BasePaths:       params.basePaths,
+		Store:                   zookeeper.Store(client),
+		ContainerWriter:         cmdutil.FileWriter(params.outputPath),
+		BasePaths:               params.basePaths,
+		LastPathItemAsSecretKey: params.lastPathItemAsSecret,
 	}
 
 	// Run the task

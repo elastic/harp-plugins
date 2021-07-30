@@ -35,8 +35,10 @@ import (
 // -----------------------------------------------------------------------------
 
 type fromEtcd3Params struct {
-	outputPath  string
-	basePaths   []string
+	outputPath           string
+	basePaths            []string
+	lastPathItemAsSecret bool
+
 	endpoints   []string
 	dialTimeout time.Duration
 	username    string
@@ -68,6 +70,8 @@ var fromEtcd3Cmd = func() *cobra.Command {
 	// Add parameters
 	cmd.Flags().StringVar(&params.outputPath, "out", "-", "Container output path ('-' for stdout)")
 	cmd.Flags().StringSliceVar(&params.basePaths, "paths", []string{}, "Exported base paths")
+	cmd.Flags().BoolVarP(&params.lastPathItemAsSecret, "last-path-item-as-secret-key", "k", false, "Use the last path element as secret key")
+
 	cmd.Flags().StringArrayVar(&params.endpoints, "endpoints", []string{"http://localhost:2379"}, "Etcd cluster endpoints")
 	cmd.Flags().DurationVar(&params.dialTimeout, "dial-timeout", 15*time.Second, "Etcd cluster dial timeout")
 	cmd.Flags().StringVar(&params.username, "username", "", "Etcd cluster connection username")
@@ -119,9 +123,10 @@ func runFromEtcd3(ctx context.Context, params *fromEtcd3Params) {
 
 	// Delegate to task
 	t := &from.ExtractTask{
-		Store:           etcd3.Store(client),
-		ContainerWriter: cmdutil.FileWriter(params.outputPath),
-		BasePaths:       params.basePaths,
+		Store:                   etcd3.Store(client),
+		ContainerWriter:         cmdutil.FileWriter(params.outputPath),
+		BasePaths:               params.basePaths,
+		LastPathItemAsSecretKey: params.lastPathItemAsSecret,
 	}
 
 	// Run the task

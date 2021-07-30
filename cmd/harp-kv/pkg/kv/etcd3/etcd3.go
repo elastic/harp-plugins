@@ -24,8 +24,10 @@ import (
 	"strings"
 
 	clientv3 "go.etcd.io/etcd/client/v3"
+	"go.uber.org/zap"
 
 	"github.com/elastic/harp-plugins/cmd/harp-kv/pkg/kv"
+	"github.com/elastic/harp/pkg/sdk/log"
 )
 
 const (
@@ -83,6 +85,8 @@ func (d *etcd3Driver) Put(ctx context.Context, key string, value []byte) error {
 }
 
 func (d *etcd3Driver) List(ctx context.Context, basePath string) ([]*kv.Pair, error) {
+	log.For(ctx).Debug("ETCDv3: Try to list keys", zap.String("prefix", basePath))
+
 	var (
 		results = []*kv.Pair{}
 		lastKey string
@@ -106,6 +110,8 @@ func (d *etcd3Driver) List(ctx context.Context, basePath string) ([]*kv.Pair, er
 			basePath = lastKey
 		}
 
+		log.For(ctx).Debug("ETCDv3: Get all keys", zap.String("key", basePath))
+
 		// Retrieve key value
 		resp, err := d.client.KV.Get(ctx, d.normalize(basePath), opts...)
 		if err != nil {
@@ -117,11 +123,14 @@ func (d *etcd3Driver) List(ctx context.Context, basePath string) ([]*kv.Pair, er
 
 		// Exit on empty result
 		if len(resp.Kvs) == 0 {
+			log.For(ctx).Debug("ETCDv3: No more result, stop.")
 			break
 		}
 
 		// Unpack values
 		for _, item := range resp.Kvs {
+			log.For(ctx).Debug("ETCDv3: Unpack result", zap.String("key", string(item.Key)))
+
 			// Skip first if lastKey is defined
 			if lastKey != "" && bytes.Equal(item.Key, []byte(lastKey)) {
 				continue
@@ -131,6 +140,11 @@ func (d *etcd3Driver) List(ctx context.Context, basePath string) ([]*kv.Pair, er
 				Value:   item.Value,
 				Version: uint64(item.Version),
 			})
+		}
+
+		// No need to paginate
+		if len(resp.Kvs) < ListBatchSize {
+			break
 		}
 
 		// Retrieve last key
