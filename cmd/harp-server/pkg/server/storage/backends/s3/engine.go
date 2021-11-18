@@ -21,7 +21,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 	"strings"
 
@@ -92,7 +92,7 @@ func (e *engine) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	// No error
-	return ioutil.ReadAll(result.Content)
+	return io.ReadAll(result.Content)
 }
 
 // -----------------------------------------------------------------------------

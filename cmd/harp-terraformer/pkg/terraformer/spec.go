@@ -24,7 +24,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 	"text/template"
 
@@ -41,7 +40,7 @@ import (
 // Run the template generation
 func Run(ctx context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, templateRaw string, w io.Writer) error {
 	// Drain input reader
-	specificationRaw, err := ioutil.ReadAll(reader)
+	specificationRaw, err := io.ReadAll(reader)
 	if err != nil {
 		return fmt.Errorf("unable to read input specification: %w", err)
 	}

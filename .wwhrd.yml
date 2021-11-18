@@ -35,11 +35,23 @@ exceptions:
   - github.com/hashicorp/vault/...
   # BSD-2 - https://github.com/magiconair/properties/blob/master/LICENSE.md
   - github.com/magiconair/properties
+  # MPL-2.0 - https://github.com/hashicorp/go-plugin/blob/master/LICENSE
+  - github.com/hashicorp/go-plugin/...
+  # MPL-2.0 - https://github.com/hashicorp/go-secure-stdlib/blob/main/LICENSE
+  - github.com/hashicorp/go-secure-stdlib/...
+  # MPL-2.0 - https://github.com/hashicorp/golang-lru/blob/master/LICENSE
+  - github.com/hashicorp/golang-lru/...
+  # MPL-2.0 - https://github.com/hashicorp/yamux/blob/master/LICENSE
+  - github.com/hashicorp/yamux
+  # MPL-2.0 - https://github.com/hashicorp/go-version/blob/master/LICENSE
+  - github.com/hashicorp/go-version
+  # MPL-2.0 - https://github.com/hashicorp/go-immutable-radix/blob/master/LICENSE
+  - github.com/hashicorp/go-immutable-radix
+  # MPL-2.0 - https://github.com/hashicorp/go-uuid/blob/master/LICENSE
+  - github.com/hashicorp/go-uuid
   # MPL-2.0 - https://github.com/hashicorp/serf/blob/master/LICENSE
   - github.com/hashicorp/serf/coordinate
   # MPL-2.0 - https://github.com/hashicorp/consul/blob/main/LICENSE
   - github.com/hashicorp/consul/api
-  # MPL-2.0 - https://github.com/hashicorp/go-immutable-radix/blob/master/LICENSE
-  - github.com/hashicorp/go-immutable-radix
-  # MPL-2.0 - https://github.com/hashicorp/golang-lru/blob/master/LICENSE
-  - github.com/hashicorp/golang-lru/simplelru
+  # BSD-2.0 - https://github.com/Nvveen/Gotty/blob/master/LICENSE
+  - github.com/Nvveen/Gotty

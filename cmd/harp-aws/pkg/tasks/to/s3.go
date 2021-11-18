@@ -22,7 +22,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
@@ -62,7 +62,7 @@ func (t *S3UploadTask) Run(ctx context.Context) error {
 	}
 
 	// Drain all content
-	payload, err := ioutil.ReadAll(reader)
+	payload, err := io.ReadAll(reader)
 	if err != nil {
 		return fmt.Errorf("unable to drain input reader: %w", err)
 	}

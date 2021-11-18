@@ -22,13 +22,22 @@ import (
 	"time"
 
 	"github.com/elastic/harp-plugins/cmd/harp-server/internal/cmd"
+	"github.com/elastic/harp/pkg/sdk/log"
+
+	// Register cloud storage
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/azblob"
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/container"
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/file"
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/gcs"
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/s3"
 	_ "github.com/elastic/harp-plugins/cmd/harp-server/pkg/server/storage/backends/vault"
-	"github.com/elastic/harp/pkg/sdk/log"
+
+	// Register encryption transformer
+	_ "github.com/elastic/harp/pkg/sdk/value/encryption/aead"
+	_ "github.com/elastic/harp/pkg/sdk/value/encryption/fernet"
+	_ "github.com/elastic/harp/pkg/sdk/value/encryption/jwe"
+	_ "github.com/elastic/harp/pkg/sdk/value/encryption/paseto"
+	_ "github.com/elastic/harp/pkg/sdk/value/encryption/secretbox"
 )
 
 func init() {

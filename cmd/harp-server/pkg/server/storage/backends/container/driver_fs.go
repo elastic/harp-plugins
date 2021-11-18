@@ -20,12 +20,11 @@ package container
 import (
 	"context"
 	"io"
-
-	"github.com/spf13/afero"
+	"io/fs"
 )
 
 type fileLoader struct {
-	fs afero.Fs
+	fs fs.FS
 }
 
 // Reader returns the file Reader

@@ -20,21 +20,20 @@ package container
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"net/url"
-
-	"github.com/spf13/afero"
 )
 
 type engine struct {
 	u  *url.URL
-	fs afero.Fs
+	fs fs.ReadFileFS
 }
 
 // -----------------------------------------------------------------------------
 
 func (e *engine) Get(ctx context.Context, id string) ([]byte, error) {
 	// Open and read all file content
-	out, err := afero.ReadFile(e.fs, id)
+	out, err := fs.ReadFile(e.fs, id)
 	if err != nil {
 		return nil, fmt.Errorf("bundle: unable to read file content: %w", err)
 	}

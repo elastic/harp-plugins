@@ -32,7 +32,7 @@ type httpLoader struct {
 // Reader returns the file Reader
 func (d *httpLoader) Reader(ctx context.Context, key string) (io.ReadCloser, error) {
 	// Prepare query
-	q, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s://%s/%s", d.scheme, d.host, key), nil)
+	q, err := http.NewRequestWithContext(ctx, http.MethodGet, fmt.Sprintf("%s://%s/%s", d.scheme, d.host, key), http.NoBody)
 	if err != nil {
 		return nil, fmt.Errorf("http: unable to prepare http query: %w", err)
 	}

@@ -30,7 +30,6 @@ import (
 
 	"github.com/awnumar/memguard"
 	"github.com/aws/aws-sdk-go/service/s3"
-	"github.com/spf13/afero"
 	"go.uber.org/zap"
 
 	"github.com/elastic/harp-plugins/cmd/harp-server/pkg/cloud/aws/session"
@@ -38,9 +37,10 @@ import (
 	bundlev1 "github.com/elastic/harp/api/gen/go/harp/bundle/v1"
 	containerv1 "github.com/elastic/harp/api/gen/go/harp/container/v1"
 	"github.com/elastic/harp/pkg/bundle"
-	"github.com/elastic/harp/pkg/bundle/vfs"
+	"github.com/elastic/harp/pkg/bundle/fs"
 	"github.com/elastic/harp/pkg/container"
 	"github.com/elastic/harp/pkg/sdk/log"
+	sdkvalue "github.com/elastic/harp/pkg/sdk/value"
 	"github.com/elastic/harp/pkg/sdk/value/encryption"
 )
 
@@ -141,10 +141,8 @@ func build(u *url.URL) (storage.Engine, error) {
 			host:   u.Host,
 		})
 	case schemeBundleDefault, schemeBundleFromFile:
-		fs := afero.NewOsFs()
-		fs = afero.NewReadOnlyFs(fs)
 		return buildWithLoader(u, &fileLoader{
-			fs: fs,
+			fs: os.DirFS(""),
 		})
 	case schemeBundleStdin:
 		return buildWithLoader(u, &stdinLoader{})
@@ -180,7 +178,7 @@ func buildWithLoader(u *url.URL, loader Loader) (storage.Engine, error) {
 	}
 
 	// Initialize virtual filesystem
-	fs, err := vfs.FromBundle(b)
+	bfs, err := fs.FromBundle(b)
 	if err != nil {
 		return nil, fmt.Errorf("unable to initialize bundle filesystem: %w", err)
 	}
@@ -188,7 +186,7 @@ func buildWithLoader(u *url.URL, loader Loader) (storage.Engine, error) {
 	// Build engine instance
 	return &engine{
 		u:  u,
-		fs: fs,
+		fs: bfs,
 	}, nil
 }
 
@@ -263,7 +261,7 @@ func getBundle(ctx context.Context, br io.Reader, containerID, psk string) (*bun
 		}
 
 		// Unlock the bundle
-		err = bundle.UnLock(ctx, b, t)
+		err = bundle.UnLock(ctx, b, []sdkvalue.Transformer{t}, true)
 		if err != nil {
 			return nil, fmt.Errorf("unable to unlock bundle: %w", err)
 		}

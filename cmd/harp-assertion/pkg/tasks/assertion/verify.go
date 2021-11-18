@@ -21,7 +21,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"time"
 
 	"gopkg.in/square/go-jose.v2"
@@ -51,7 +51,7 @@ func (t *Verify) Run(ctx context.Context) error {
 	}
 
 	// Drain input
-	assertion, err := ioutil.ReadAll(reader)
+	assertion, err := io.ReadAll(reader)
 	if err != nil {
 		return fmt.Errorf("unable to read assertion from reader: %w", err)
 	}

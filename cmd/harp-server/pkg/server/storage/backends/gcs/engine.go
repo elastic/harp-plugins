@@ -38,7 +38,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/url"
 
 	"cloud.google.com/go/storage"
@@ -90,5 +90,5 @@ func (d *engine) Get(ctx context.Context, key string) ([]byte, error) {
 	}
 
 	// No error
-	return ioutil.ReadAll(result.Content)
+	return io.ReadAll(result.Content)
 }
