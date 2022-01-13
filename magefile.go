@@ -34,13 +34,24 @@ var (
 		Name:        "Harp Server",
 		Description: "Harp Container Server",
 	}
+	harpTerraformer = &artifact.Command{
+		Package:     "github.com/elastic/harp-plugins",
+		Module:      "cmd/harp-terraformer",
+		Name:        "Harp Terraformer",
+		Description: "Harp CSO Vault Policy generator",
+	}
 )
 
 // -----------------------------------------------------------------------------
 
 type Releaser mg.Namespace
 
-// HarpServer builds the harp-server binaries using docker pipeline.
-func (Releaser) HarpServer() error {
+// Server builds the harp-server binaries using docker pipeline.
+func (Releaser) Server() error {
+	return docker.Release(harpServer)()
+}
+
+// Terraformer builds the harp-terraformer binaries using docker pipeline.
+func (Releaser) Terraformer() error {
 	return docker.Release(harpServer)()
 }
