@@ -1,4 +1,4 @@
-Copyright 2019-2021 Elasticsearch BV
+Copyright 2019-2022 Elasticsearch BV
 
 This product includes software developed by The Apache Software
 Foundation (http://www.apache.org/).
@@ -41,11 +41,11 @@ SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/elastic/harp
-Version : v0.2.1
-Time    : 2021-11-17T16:28:17Z
+Version : v0.2.4
+Time    : 2022-01-12T16:38:47Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/elastic/harp@v0.2.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/elastic/harp@v0.2.4/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -559,11 +559,11 @@ Contents of probable licence file $GOMODCACHE/github.com/google/gofuzz@v1.2.0/LI
 
 --------------------------------------------------------------------------------
 Module  : github.com/gosimple/slug
-Version : v1.11.2
-Time    : 2021-11-08T20:10:10Z
+Version : v1.12.0
+Time    : 2021-12-13T17:27:11Z
 Licence : MPL-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/gosimple/slug@v1.11.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/gosimple/slug@v1.12.0/LICENSE:
 
 Mozilla Public License Version 2.0
 ==================================
@@ -942,11 +942,11 @@ Exhibit B - "Incompatible With Secondary Licenses" Notice
 
 --------------------------------------------------------------------------------
 Module  : github.com/hashicorp/hcl/v2
-Version : v2.10.1
-Time    : 2021-07-21T12:56:47Z
+Version : v2.11.1
+Time    : 2021-12-01T17:26:16Z
 Licence : MPL-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/hashicorp/hcl/v2@v2.10.1/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/hashicorp/hcl/v2@v2.11.1/LICENSE:
 
 Mozilla Public License, version 2.0
 
@@ -1305,11 +1305,11 @@ Exhibit B - “Incompatible With Secondary Licenses” Notice
 
 --------------------------------------------------------------------------------
 Module  : github.com/magefile/mage
-Version : v1.11.0
-Time    : 2020-12-29T05:11:47Z
+Version : v1.12.1
+Time    : 2021-12-15T21:00:02Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/magefile/mage@v1.11.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/magefile/mage@v1.12.1/LICENSE:
 
                                  Apache License
                            Version 2.0, January 2004
@@ -1516,11 +1516,11 @@ Contents of probable licence file $GOMODCACHE/github.com/magefile/mage@v1.11.0/L
 
 --------------------------------------------------------------------------------
 Module  : github.com/spf13/cobra
-Version : v1.2.1
-Time    : 2021-07-02T15:25:47Z
+Version : v1.3.0
+Time    : 2021-12-14T18:22:51Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/github.com/spf13/cobra@v1.2.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/github.com/spf13/cobra@v1.3.0/LICENSE.txt:
 
                                 Apache License
                            Version 2.0, January 2004
@@ -1700,11 +1700,11 @@ Contents of probable licence file $GOMODCACHE/github.com/spf13/cobra@v1.2.1/LICE
 
 --------------------------------------------------------------------------------
 Module  : go.uber.org/zap
-Version : v1.19.1
-Time    : 2021-09-08T21:32:28Z
+Version : v1.20.0
+Time    : 2022-01-04T19:15:23Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.19.1/LICENSE.txt:
+Contents of probable licence file $GOMODCACHE/go.uber.org/zap@v1.20.0/LICENSE.txt:
 
 Copyright (c) 2016-2017 Uber Technologies, Inc.
 
@@ -4673,11 +4673,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mattn/go-colorable
-Version : v0.1.9
-Time    : 2021-09-20T16:49:15Z
+Version : v0.1.12
+Time    : 2021-11-23T14:52:42Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mattn/go-colorable@v0.1.9/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mattn/go-colorable@v0.1.12/LICENSE:
 
 The MIT License (MIT)
 
@@ -4814,11 +4814,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/mitchellh/mapstructure
-Version : v1.4.2
-Time    : 2021-09-14T17:25:19Z
+Version : v1.4.3
+Time    : 2021-12-01T18:06:12Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/mitchellh/mapstructure@v1.4.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/mitchellh/mapstructure@v1.4.3/LICENSE:
 
 The MIT License (MIT)
 
@@ -5901,11 +5901,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : github.com/spf13/viper
-Version : v1.9.0
-Time    : 2021-09-19T21:25:03Z
+Version : v1.10.0
+Time    : 2021-12-12T03:00:30Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/github.com/spf13/viper@v1.9.0/LICENSE:
+Contents of probable licence file $GOMODCACHE/github.com/spf13/viper@v1.10.0/LICENSE:
 
 The MIT License (MIT)
 
@@ -6328,11 +6328,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : go.uber.org/goleak
-Version : v1.1.11-0.20210813005559-691160354723
-Time    : 2021-08-13T00:55:59Z
+Version : v1.1.11
+Time    : 2021-09-08T23:26:58Z
 Licence : MIT
 
-Contents of probable licence file $GOMODCACHE/go.uber.org/goleak@v1.1.11-0.20210813005559-691160354723/LICENSE:
+Contents of probable licence file $GOMODCACHE/go.uber.org/goleak@v1.1.11/LICENSE:
 
 The MIT License (MIT)
 
@@ -6388,11 +6388,11 @@ THE SOFTWARE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/crypto
-Version : v0.0.0-20211108221036-ceb1ce70b4fa
-Time    : 2021-11-08T22:10:36Z
+Version : v0.0.0-20211117183948-ae814b36b871
+Time    : 2021-11-17T18:39:48Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/crypto@v0.0.0-20211108221036-ceb1ce70b4fa/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/crypto@v0.0.0-20211117183948-ae814b36b871/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -6425,11 +6425,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/net
-Version : v0.0.0-20210913180222-943fd674d43e
-Time    : 2021-09-13T18:02:22Z
+Version : v0.0.0-20211112202133-69e39bad7dc2
+Time    : 2021-11-12T20:21:33Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/net@v0.0.0-20210913180222-943fd674d43e/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/net@v0.0.0-20211112202133-69e39bad7dc2/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -6462,11 +6462,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/sys
-Version : v0.0.0-20211113001501-0c823b97ae02
-Time    : 2021-11-13T00:15:01Z
+Version : v0.0.0-20211205182925-97ca703d548d
+Time    : 2021-12-05T18:29:25Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211113001501-0c823b97ae02/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/sys@v0.0.0-20211205182925-97ca703d548d/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -6499,11 +6499,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : golang.org/x/term
-Version : v0.0.0-20210927222741-03fcf44c2211
-Time    : 2021-09-27T22:27:41Z
+Version : v0.0.0-20201126162022-7de9c90e9dd1
+Time    : 2020-11-26T16:20:22Z
 Licence : BSD-3-Clause
 
-Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20210927222741-03fcf44c2211/LICENSE:
+Contents of probable licence file $GOMODCACHE/golang.org/x/term@v0.0.0-20201126162022-7de9c90e9dd1/LICENSE:
 
 Copyright (c) 2009 The Go Authors. All rights reserved.
 
@@ -6610,11 +6610,11 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : google.golang.org/genproto
-Version : v0.0.0-20211112145013-271947fe86fd
-Time    : 2021-11-12T14:50:13Z
+Version : v0.0.0-20211208223120-3a66f561d7aa
+Time    : 2021-12-08T22:31:20Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211112145013-271947fe86fd/LICENSE:
+Contents of probable licence file $GOMODCACHE/google.golang.org/genproto@v0.0.0-20211208223120-3a66f561d7aa/LICENSE:
 
 
                                  Apache License
@@ -7069,11 +7069,11 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 --------------------------------------------------------------------------------
 Module  : gopkg.in/ini.v1
-Version : v1.63.2
-Time    : 2021-09-16T05:34:39Z
+Version : v1.66.2
+Time    : 2021-12-02T14:07:20Z
 Licence : Apache-2.0
 
-Contents of probable licence file $GOMODCACHE/gopkg.in/ini.v1@v1.63.2/LICENSE:
+Contents of probable licence file $GOMODCACHE/gopkg.in/ini.v1@v1.66.2/LICENSE:
 
 Apache License
 Version 2.0, January 2004
