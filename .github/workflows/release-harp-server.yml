@@ -103,7 +103,7 @@ jobs:
         name: Create SBOM
         uses: anchore/sbom-action@v0
         with:
-          image: ghcr.io/elastic/harp-plugins/${{ matrix.tools-image }}:latest
+          image: ghcr.io/elastic/harp-plugins/${{ matrix.harp-image }}:v${{ github.event.inputs.release }}
           registry-username: ${{ github.actor }}
           registry-password: ${{ github.token }}
           artifact-name: sbom.spdx
@@ -118,8 +118,8 @@ jobs:
             -a "repo=${{ github.repository }}" \
             -a "workflow=${{ github.workflow }}" \
             -a "ref=${{ github.sha }}" \
-            ghcr.io/elastic/harp-plugins/${{ matrix.tools-image }}:latest
-          cosign attach sbom --sbom sbom.spdx ghcr.io/elastic/harp-plugins/${{ matrix.tools-image }}:latest
+            ghcr.io/elastic/harp-plugins/${{ matrix.harp-image }}:v${{ github.event.inputs.release }}
+          cosign attach sbom --sbom sbom.spdx ghcr.io/elastic/harp-plugins/${{ matrix.harp-image }}:v${{ github.event.inputs.release }}
         env:
           COSIGN_KEY: ${{ secrets.COSIGN_KEY }}
           COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}

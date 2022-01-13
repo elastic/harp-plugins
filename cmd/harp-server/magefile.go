@@ -15,7 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-//+build mage
+//go:build mage
+// +build mage
 
 package main
 
@@ -122,10 +123,6 @@ func Release(ctx context.Context) error {
 			)()
 		},
 		func() error {
-			if !golang.Is("go1.16rc1", "go1.16") {
-				// Skip the build
-				return nil
-			}
 			return golang.Release(
 				"harp-server",
 				"github.com/elastic/harp-plugins/cmd/harp-server",
