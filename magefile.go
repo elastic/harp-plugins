@@ -53,5 +53,5 @@ func (Releaser) Server() error {
 
 // Terraformer builds the harp-terraformer binaries using docker pipeline.
 func (Releaser) Terraformer() error {
-	return docker.Release(harpServer)()
+	return docker.Release(harpTerraformer)()
 }
