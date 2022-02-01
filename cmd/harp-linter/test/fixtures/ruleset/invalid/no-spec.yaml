@@ -1,7 +1,0 @@
-apiVersion: harp.elastic.co/linter/v1
-kind: RuleSet
-meta:
-  name: harp-server
-  description: Package and secret constraints for harp-server
-  owner: security@elastic.co
-spec:
