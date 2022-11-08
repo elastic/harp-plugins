@@ -1,0 +1,29 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/AppRoleDefinitionMeta",
+    "definitions": {
+        "AppRoleDefinitionMeta": {
+            "properties": {
+                "name": {
+                    "type": "string"
+                },
+                "owner": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "issues": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "App Role Definition Meta",
+            "description": "AppRoleDefinitionSpec handles approle specification details."
+        }
+    }
+}

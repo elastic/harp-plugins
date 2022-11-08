@@ -1,0 +1,112 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema#",
+    "$ref": "#/definitions/AppRoleDefinitionSpec",
+    "definitions": {
+        "AppRoleDefinitionSpec": {
+            "properties": {
+                "selector": {
+                    "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSelector",
+                    "additionalProperties": true
+                },
+                "namespaces": {
+                    "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionNamespaces",
+                    "additionalProperties": true
+                },
+                "custom": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "App Role Definition Spec",
+            "description": "AppRoleDefinitionSpec handles approle specification details."
+        },
+        "harp.terraformer.v1.AppRoleDefinitionNamespaces": {
+            "properties": {
+                "infrastructure": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                },
+                "platform": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                },
+                "product": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                },
+                "application": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                },
+                "artifact": {
+                    "items": {
+                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "App Role Definition Namespaces",
+            "description": "AppRoleDefinitionNamespaces defines secret path according to namespaces."
+        },
+        "harp.terraformer.v1.AppRoleDefinitionSecretSuffix": {
+            "properties": {
+                "suffix": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "capabilities": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "App Role Definition Secret Suffix",
+            "description": "AppRoleDefinitionSecret defines secret responsibilites."
+        },
+        "harp.terraformer.v1.AppRoleDefinitionSelector": {
+            "properties": {
+                "environments": {
+                    "items": {
+                        "type": "string"
+                    },
+                    "type": "array"
+                },
+                "platform": {
+                    "type": "string"
+                },
+                "product": {
+                    "type": "string"
+                },
+                "version": {
+                    "type": "string"
+                },
+                "component": {
+                    "type": "string"
+                }
+            },
+            "additionalProperties": true,
+            "type": "object",
+            "title": "App Role Definition Selector",
+            "description": "AppRoleDefinitionSelector defines secret path generator default values."
+        }
+    }
+}
