@@ -46,7 +46,7 @@ func buildNamespaces(def *terraformerv1.AppRoleDefinition, env string) (suffixPr
 		return nil, err
 	}
 
-	// Builb processors map
+	// Build processors map
 	return map[csov1.Ring]struct {
 		prefix     []string
 		suffixFunc func() []*terraformerv1.AppRoleDefinitionSecretSuffix
