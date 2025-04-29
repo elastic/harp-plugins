@@ -24,7 +24,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"os"
 	"text/template"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
