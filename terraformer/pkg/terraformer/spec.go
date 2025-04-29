@@ -24,7 +24,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"os"
 	"text/template"
 
 	validation "github.com/go-ozzo/ozzo-validation/v4"
@@ -38,7 +37,7 @@ import (
 // -----------------------------------------------------------------------------
 
 // Run the template generation
-func Run(ctx context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, templateRaw string, w io.Writer) error {
+func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, templateRaw string, w io.Writer) error {
 	// Drain input reader
 	specificationRaw, err := io.ReadAll(reader)
 	if err != nil {
@@ -91,7 +90,7 @@ func Run(ctx context.Context, reader io.Reader, environmentParam string, noToken
 	}
 
 	// Write result to writer
-	if _, err := fmt.Fprintf(os.Stdout, "%s", formatted); err != nil {
+	if _, err := w.Write(formatted); err != nil {
 		return fmt.Errorf("unable to write output result: %w", err)
 	}
 

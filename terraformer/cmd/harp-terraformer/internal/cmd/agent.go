@@ -53,7 +53,7 @@ var terraformerAgentCmd = func() *cobra.Command {
 	return cmd
 }
 
-func runTerraformerAgent(cmd *cobra.Command, args []string) {
+func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 	ctx, cancel := cmdutil.Context(cmd.Context(), "harp-terraformer-agent", conf.Debug.Enable, conf.Instrumentation.Logs.Level)
 	defer cancel()
 

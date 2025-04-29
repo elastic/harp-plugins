@@ -51,7 +51,7 @@ var terraformerServiceCmd = func() *cobra.Command {
 	return cmd
 }
 
-func runTerraformerService(cmd *cobra.Command, args []string) {
+func runTerraformerService(cmd *cobra.Command, _ []string) {
 	ctx, cancel := cmdutil.Context(cmd.Context(), "harp-terraformer-service", conf.Debug.Enable, conf.Instrumentation.Logs.Level)
 	defer cancel()
 
