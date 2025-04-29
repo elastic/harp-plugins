@@ -38,7 +38,7 @@ import (
 // -----------------------------------------------------------------------------
 
 // Run the template generation
-func Run(ctx context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, templateRaw string, w io.Writer) error {
+func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, templateRaw string, w io.Writer) error {
 	// Drain input reader
 	specificationRaw, err := io.ReadAll(reader)
 	if err != nil {
