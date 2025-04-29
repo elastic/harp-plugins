@@ -90,7 +90,7 @@ func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWr
 	}
 
 	// Write result to writer
-	if _, err := fmt.Fprintf(os.Stdout, "%s", formatted); err != nil {
+	if _, err := w.Write(formatted); err != nil {
 		return fmt.Errorf("unable to write output result: %w", err)
 	}
 
