@@ -209,6 +209,7 @@ var allowedCapabilities = types.StringArray{
 	"read",
 	"update",
 	"delete",
+	"sudo",
 }
 
 // filterCapabilities removes useless capabilities

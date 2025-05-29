@@ -19,7 +19,7 @@ package terraformer
 
 import terraformerv1 "github.com/elastic/harp-plugins/terraformer/api/gen/go/harp/terraformer/v1"
 
-// ServiceTemplate is the TF 0.12 Service template.
+// ServiceTemplate is the TF +0.12 Service template.
 const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
@@ -74,7 +74,7 @@ resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
 }
 `
 
-// AgentTemplate is the TF 0.12 Agent template.
+// AgentTemplate is the TF +0.12 Agent template.
 const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
@@ -124,6 +124,47 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
 	"agent-default",
     "agent-{{.ObjectName}}",
   ]
+}
+`
+
+// PolicyTemplate is the TF +0.12 Agent template.
+const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
+# https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
+# ---
+# SpecificationHash: "{{.SpecHash}}"
+# Owner: "{{.Meta.Owner}}"
+# Date: "{{.Date}}"
+# Description: "{{.Meta.Description}}"
+# Issues:{{range .Meta.Issues}}
+# - {{.}}{{ end }}
+# ---
+#
+# ------------------------------------------------------------------------------
+
+# Create the policy
+data "vault_policy_document" "service-{{.ObjectName}}" {
+{{- range $ns, $secrets := .Namespaces }}
+  # {{ $ns }} secrets{{ range $k, $item := $secrets }}
+  rule {
+	description  = "{{$item.Description}}"
+	path         = "{{$item.Path}}"
+    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
+  }
+  {{end -}}
+{{end}}{{if .CustomRules }}
+  # Custom secret paths{{ range $k, $item := .CustomRules }}
+  rule {
+	description  = "{{$item.Description}}"
+	path         = "{{$item.Path}}"
+    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
+  }
+  {{end}}{{end -}}
+}
+
+# Register the policy
+resource "vault_policy" "agent-{{.ObjectName}}" {
+  name   = "agent-{{.ObjectName}}"
+  policy = data.vault_policy_document.agent-{{.ObjectName}}.hcl
 }
 `
 
