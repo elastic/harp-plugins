@@ -19,7 +19,7 @@ package terraformer
 
 import terraformerv1 "github.com/elastic/harp-plugins/terraformer/api/gen/go/harp/terraformer/v1"
 
-// ServiceTemplate is the TF +0.12 Service template.
+// ServiceTemplate is the TF >=0.12 Service template.
 const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
@@ -74,7 +74,7 @@ resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
 }
 `
 
-// AgentTemplate is the TF +0.12 Agent template.
+// AgentTemplate is the TF >=0.12 Agent template.
 const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
@@ -127,7 +127,7 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
 }
 `
 
-// PolicyTemplate is the TF +0.12 Agent template.
+// PolicyTemplate is the TF >=0.12 Agent template.
 const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
@@ -142,7 +142,7 @@ const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # ------------------------------------------------------------------------------
 
 # Create the policy
-data "vault_policy_document" "service-{{.ObjectName}}" {
+data "vault_policy_document" "policy-{{.ObjectName}}" {
 {{- range $ns, $secrets := .Namespaces }}
   # {{ $ns }} secrets{{ range $k, $item := $secrets }}
   rule {
@@ -162,7 +162,7 @@ data "vault_policy_document" "service-{{.ObjectName}}" {
 }
 
 # Register the policy
-resource "vault_policy" "agent-{{.ObjectName}}" {
+resource "vault_policy" "policy-{{.ObjectName}}" {
   name   = "agent-{{.ObjectName}}"
   policy = data.vault_policy_document.agent-{{.ObjectName}}.hcl
 }
