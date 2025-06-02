@@ -163,8 +163,8 @@ data "vault_policy_document" "policy-{{.ObjectName}}" {
 
 # Register the policy
 resource "vault_policy" "policy-{{.ObjectName}}" {
-  name   = "agent-{{.ObjectName}}"
-  policy = data.vault_policy_document.agent-{{.ObjectName}}.hcl
+  name   = "policy-{{.ObjectName}}"
+  policy = data.vault_policy_document.policy-{{.ObjectName}}.hcl
 }
 `
 
