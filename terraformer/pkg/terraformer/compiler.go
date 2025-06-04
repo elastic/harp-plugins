@@ -129,21 +129,28 @@ func pathCompiler(ring csov1.Ring, prefix []string, suffixFunc func() []*terrafo
 	return nil
 }
 
-func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool) (*tmplModel, error) {
+func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool, noEnvironmentSuffix bool) (*tmplModel, error) {
 	// Check arguments
 	if err := validate(def); err != nil {
 		return nil, err
 	}
 
+	// Check environment and suffix removal
+	objectName := slug.Make(fmt.Sprintf("%s %s", def.Meta.Name, env))
+	if noEnvironmentSuffix {
+		objectName = slug.Make(def.Meta.Name)
+	}
+
 	res := &tmplModel{
-		Date:             time.Now().UTC().Format(time.RFC3339),
-		SpecHash:         specHash,
-		Meta:             def.Meta,
-		Environment:      slug.Make(env),
-		RoleName:         slug.Make(def.Meta.Name),
-		ObjectName:       slug.Make(fmt.Sprintf("%s %s", def.Meta.Name, env)),
-		Namespaces:       map[string][]tmpSecretModel{},
-		DisableTokenWrap: noTokenWrap,
+		Date:                     time.Now().UTC().Format(time.RFC3339),
+		SpecHash:                 specHash,
+		Meta:                     def.Meta,
+		Environment:              slug.Make(env),
+		RoleName:                 slug.Make(def.Meta.Name),
+		ObjectName:               objectName,
+		Namespaces:               map[string][]tmpSecretModel{},
+		DisableTokenWrap:         noTokenWrap,
+		DisableEnvironmentSuffix: noEnvironmentSuffix,
 	}
 
 	if def.Spec.Namespaces != nil {
