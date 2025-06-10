@@ -48,7 +48,7 @@ var terraformerServiceCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerServiceInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerServiceOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerServiceEnvironment, "env", "production", "Target environment")
-	cmd.Flags().BoolVar(&terraformerApproleDisableEnvironmentSuffix, "no-env-suffix", false, "Disable environment suffix in role and policy names")
+	cmd.Flags().BoolVar(&terraformerServiceDisableEnvironmentSuffix, "no-env-suffix", false, "Disable environment suffix in role and policy names")
 
 	return cmd
 }
