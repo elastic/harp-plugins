@@ -27,10 +27,11 @@ import (
 
 func Test_compile(t *testing.T) {
 	type args struct {
-		env         string
-		def         *terraformerv1.AppRoleDefinition
-		specHash    string
-		noTokenWrap bool
+		env                 string
+		def                 *terraformerv1.AppRoleDefinition
+		specHash            string
+		noTokenWrap         bool
+		noEnvironmentSuffix bool
 	}
 	tests := []struct {
 		name    string
@@ -50,8 +51,9 @@ func Test_compile(t *testing.T) {
 					ApiVersion: "harp.elastic.co/terraformer/v1",
 					Kind:       "AppRoleDefinition",
 				},
-				noTokenWrap: false,
-				specHash:    "123456",
+				noTokenWrap:         false,
+				noEnvironmentSuffix: false,
+				specHash:            "123456",
 			},
 
 			wantErr: true,
@@ -65,6 +67,7 @@ func Test_compile(t *testing.T) {
 					Kind:       "AppRoleDefinition",
 					Meta:       &terraformerv1.AppRoleDefinitionMeta{},
 				},
+				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -79,6 +82,7 @@ func Test_compile(t *testing.T) {
 						Name: "foo",
 					},
 				},
+				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -94,6 +98,7 @@ func Test_compile(t *testing.T) {
 						Owner: "security@elastic.co",
 					},
 				},
+				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -110,8 +115,9 @@ func Test_compile(t *testing.T) {
 						Description: "test",
 					},
 				},
-				noTokenWrap: false,
-				specHash:    "123456",
+				noTokenWrap:         false,
+				noEnvironmentSuffix: false,
+				specHash:            "123456",
 			},
 			wantErr: true,
 		},
@@ -129,8 +135,9 @@ func Test_compile(t *testing.T) {
 					},
 					Spec: &terraformerv1.AppRoleDefinitionSpec{},
 				},
-				noTokenWrap: false,
-				specHash:    "123456",
+				noTokenWrap:         false,
+				noEnvironmentSuffix: false,
+				specHash:            "123456",
 			},
 			wantErr: true,
 		},
@@ -150,15 +157,16 @@ func Test_compile(t *testing.T) {
 						Selector: &terraformerv1.AppRoleDefinitionSelector{},
 					},
 				},
-				noTokenWrap: false,
-				specHash:    "123456",
+				noTokenWrap:         false,
+				noEnvironmentSuffix: false,
+				specHash:            "123456",
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap)
+			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.noEnvironmentSuffix)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -188,6 +196,7 @@ func Test_compile_Fuzz(t *testing.T) {
 		}
 		var specHash string
 		var tokenWrap bool
+		var noEnvSuffix bool
 
 		// Fuzz input
 		f.Fuzz(&env)
@@ -196,9 +205,10 @@ func Test_compile_Fuzz(t *testing.T) {
 		f.Fuzz(&spec.Spec.Custom)
 		f.Fuzz(&specHash)
 		f.Fuzz(&tokenWrap)
+		f.Fuzz(&noEnvSuffix)
 
 		// Execute
-		compile(env, spec, specHash, tokenWrap)
+		compile(env, spec, specHash, tokenWrap, noEnvSuffix)
 	}
 }
 
