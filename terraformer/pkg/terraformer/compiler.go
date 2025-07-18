@@ -129,7 +129,7 @@ func pathCompiler(ring csov1.Ring, prefix []string, suffixFunc func() []*terrafo
 	return nil
 }
 
-func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool, noEnvironmentSuffix bool) (*tmplModel, error) {
+func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap, noEnvironmentSuffix bool) (*tmplModel, error) {
 	// Check arguments
 	if err := validate(def); err != nil {
 		return nil, err
