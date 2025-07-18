@@ -18,6 +18,7 @@
 package terraformer
 
 import (
+	"reflect"
 	"testing"
 
 	terraformerv1 "github.com/elastic/harp-plugins/terraformer/api/gen/go/harp/terraformer/v1"
@@ -167,7 +168,7 @@ func Test_compile(t *testing.T) {
 }
 
 func Test_compile_Fuzz(t *testing.T) {
-	// Making sure the descrption never panics
+	// Making sure the description never panics
 	for i := 0; i < 50; i++ {
 		f := fuzz.New()
 
@@ -198,5 +199,60 @@ func Test_compile_Fuzz(t *testing.T) {
 
 		// Execute
 		compile(env, spec, specHash, tokenWrap)
+	}
+}
+
+func Test_filterCapabilities(t *testing.T) {
+	tests := []struct {
+		name     string
+		input    []string
+		expected []string
+	}{
+		{
+			name:     "empty input",
+			input:    []string{},
+			expected: []string{"read"},
+		},
+		{
+			name: "all allowed",
+			input: []string{
+				"read",
+				"create",
+				"list",
+				"patch",
+				"update",
+			},
+			expected: []string{
+				"read",
+				"create",
+				"list",
+				"patch",
+				"update",
+			},
+		},
+		{
+			name:     "some not allowed",
+			input:    []string{"read", "foo", "bar", "delete"},
+			expected: []string{"read", "delete"},
+		},
+		{
+			name:     "duplicates",
+			input:    []string{"read", "read", "delete", "delete"},
+			expected: []string{"read", "delete"},
+		},
+		{
+			name:     "only not allowed",
+			input:    []string{"foo", "bar"},
+			expected: []string{"read"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := filterCapabilities(tt.input)
+			if !reflect.DeepEqual(got, tt.expected) {
+				t.Errorf("filterCapabilities(%v) = %v, want %v", tt.input, got, tt.expected)
+			}
+		})
 	}
 }
