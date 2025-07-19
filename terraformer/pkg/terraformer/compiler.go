@@ -204,12 +204,13 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 
 // List of allowed capabilities
 var allowedCapabilities = types.StringArray{
-	"list",
 	"create",
-	"read",
-	"update",
 	"delete",
+	"list",
+	"patch",
+	"recover",
 	"sudo",
+	"update",
 }
 
 // filterCapabilities removes useless capabilities
