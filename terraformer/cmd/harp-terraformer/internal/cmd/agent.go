@@ -29,10 +29,11 @@ import (
 )
 
 var (
-	terraformerAgentInputSpec        string
-	terraformerAgentOutputPath       string
-	terraformerAgentDisableTokenWrap bool
-	terraformerAgentEnvironment      string
+	terraformerAgentInputSpec                string
+	terraformerAgentOutputPath               string
+	terraformerAgentDisableTokenWrap         bool
+	terraformerAgentDisableEnvironmentSuffix bool
+	terraformerAgentEnvironment              string
 )
 
 // -----------------------------------------------------------------------------
@@ -49,6 +50,7 @@ var terraformerAgentCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerAgentOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerAgentEnvironment, "env", "production", "Target environment")
 	cmd.Flags().BoolVar(&terraformerAgentDisableTokenWrap, "no-token-wrap", false, "Disable token wrapping")
+	cmd.Flags().BoolVar(&terraformerAgentDisableEnvironmentSuffix, "no-env-suffix", false, "Disable environment suffix in role and policy names")
 
 	return cmd
 }
@@ -75,7 +77,7 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, terraformer.AgentTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, terraformerAgentDisableEnvironmentSuffix, terraformer.AgentTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
 	}
 }

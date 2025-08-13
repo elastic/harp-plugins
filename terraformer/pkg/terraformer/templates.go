@@ -127,6 +127,61 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
 }
 `
 
+// ApproleTemplate is the TF >=0.12 Agent template.
+const ApproleTemplate = `# Generated with Harp Terraformer, Don't modify.
+# https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
+# ---
+# SpecificationHash: "{{.SpecHash}}"
+# Owner: "{{.Meta.Owner}}"
+# Date: "{{.Date}}"
+# Description: "{{.Meta.Description}}"
+# Issues:{{range .Meta.Issues}}
+# - {{.}}{{ end }}
+# ---
+#
+# ------------------------------------------------------------------------------
+
+# Create the policy
+data "vault_policy_document" "approle-{{.ObjectName}}" {
+{{- range $ns, $secrets := .Namespaces }}
+  # {{ $ns }} secrets{{ range $k, $item := $secrets }}
+  rule {
+	description  = "{{$item.Description}}"
+	path         = "{{$item.Path}}"
+    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
+  }
+  {{end -}}
+{{end}}{{if .CustomRules }}
+  # Custom secret paths{{ range $k, $item := .CustomRules }}
+  rule {
+	description  = "{{$item.Description}}"
+	path         = "{{$item.Path}}"
+    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
+  }
+  {{end}}{{end -}}
+}
+
+# Register the policy
+resource "vault_policy" "approle-{{.ObjectName}}" {
+  name   = "approle-{{.ObjectName}}"
+  policy = data.vault_policy_document.approle-{{.ObjectName}}.hcl
+}
+
+# ------------------------------------------------------------------------------
+#
+# Register the backend role
+resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
+  backend   = "approle"
+  role_name = "{{.ObjectName}}"
+
+  token_policies = [
+	"cso-default",
+	"service-default",
+    "approle-{{.ObjectName}}",
+  ]
+}
+`
+
 // PolicyTemplate is the TF >=0.12 Agent template.
 const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
@@ -189,6 +244,8 @@ type tmplModel struct {
 	CustomRules []tmpSecretModel
 	// DisableTokenWrap disable token wrap enforcement
 	DisableTokenWrap bool
+	// DisableEnvironmentSuffix disable environment suffix in role and policy names
+	DisableEnvironmentSuffix bool
 }
 
 type tmpSecretModel struct {
