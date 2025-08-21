@@ -36,7 +36,7 @@ require (
 	github.com/fatih/structs v1.1.0 // indirect
 	github.com/fernet/fernet-go v0.0.0-20240119011108-303da6aec611 // indirect
 	github.com/fsnotify/fsnotify v1.8.0 // indirect
-	github.com/go-viper/mapstructure/v2 v2.2.1 // indirect
+	github.com/go-viper/mapstructure/v2 v2.4.0 // indirect
 	github.com/gobwas/glob v0.2.3 // indirect
 	github.com/google/go-cmp v0.7.0 // indirect
 	github.com/google/gops v0.3.28 // indirect
