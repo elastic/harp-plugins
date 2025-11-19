@@ -1,6 +1,6 @@
 module github.com/elastic/harp-plugins/aws
 
-go 1.17
+go 1.24.0
 
 require (
 	github.com/aws/aws-sdk-go v1.42.44
@@ -10,7 +10,7 @@ require (
 	github.com/magefile/mage v1.12.1
 	github.com/spf13/cobra v1.3.0
 	go.uber.org/zap v1.20.0
-	golang.org/x/crypto v0.0.0-20220131195533-30dcbda58838
+	golang.org/x/crypto v0.45.0
 )
 
 require (
@@ -50,9 +50,9 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	go.uber.org/atomic v1.9.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
-	golang.org/x/sys v0.0.0-20220722155257-8c9f86f7a55f // indirect
-	golang.org/x/term v0.0.0-20201126162022-7de9c90e9dd1 // indirect
-	golang.org/x/text v0.3.8 // indirect
+	golang.org/x/sys v0.38.0 // indirect
+	golang.org/x/term v0.37.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 	google.golang.org/protobuf v1.27.1 // indirect
 	gopkg.in/ini.v1 v1.66.2 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
