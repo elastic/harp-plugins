@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	terraformerPolicyInputSpec                string
-	terraformerPolicyOutputPath               string
-	terraformerPolicyEnvironment              string
-	terraformerPolicyDisableEnvironmentSuffix bool
+	terraformerPolicyInputSpec   string
+	terraformerPolicyOutputPath  string
+	terraformerPolicyEnvironment string
 )
 
 // -----------------------------------------------------------------------------
@@ -48,7 +47,6 @@ var terraformerPolicyCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerPolicyInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerPolicyOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerPolicyEnvironment, "env", "production", "Target environment")
-	cmd.Flags().BoolVar(&terraformerPolicyDisableEnvironmentSuffix, "no-env-suffix", false, "Disable environment suffix in policy names")
 
 	return cmd
 }
@@ -74,8 +72,8 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
 	}
 
-	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, terraformerPolicyDisableEnvironmentSuffix, terraformer.PolicyTemplate, writer); err != nil {
+	// Run terraformer (policy template doesn't use auth engine)
+	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 }

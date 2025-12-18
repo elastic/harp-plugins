@@ -46,6 +46,8 @@ message AppRoleDefinitionMeta {
 message AppRoleDefinitionSpec {
   AppRoleDefinitionSelector selector = 1;
   AppRoleDefinitionNamespaces namespaces = 2;
+  bool disable_environment_suffix = 3;
+  string auth_engine_name = 4;
   repeated AppRoleDefinitionSecretSuffix custom = 6;
 }
 

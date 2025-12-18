@@ -29,10 +29,9 @@ import (
 )
 
 var (
-	terraformerServiceInputSpec                string
-	terraformerServiceOutputPath               string
-	terraformerServiceEnvironment              string
-	terraformerServiceDisableEnvironmentSuffix bool
+	terraformerServiceInputSpec   string
+	terraformerServiceOutputPath  string
+	terraformerServiceEnvironment string
 )
 
 // -----------------------------------------------------------------------------
@@ -48,7 +47,6 @@ var terraformerServiceCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerServiceInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerServiceOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerServiceEnvironment, "env", "production", "Target environment")
-	cmd.Flags().BoolVar(&terraformerServiceDisableEnvironmentSuffix, "no-env-suffix", false, "Disable environment suffix in role and policy names")
 
 	return cmd
 }
@@ -75,7 +73,7 @@ func runTerraformerService(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerServiceEnvironment, true, terraformerServiceDisableEnvironmentSuffix, terraformer.ServiceTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerServiceEnvironment, true, "service", terraformer.ServiceTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerServiceInputSpec))
 	}
 }

@@ -129,15 +129,22 @@ func pathCompiler(ring csov1.Ring, prefix []string, suffixFunc func() []*terrafo
 	return nil
 }
 
-func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap, noEnvironmentSuffix bool) (*tmplModel, error) {
+func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool, defaultAuthEngineName string) (*tmplModel, error) {
 	// Check arguments
 	if err := validate(def); err != nil {
 		return nil, err
 	}
 
-	// Check environment and suffix removal
+	// Read from spec only (GitOps - spec is source of truth)
+	disableEnvSuffix := def.Spec.DisableEnvironmentSuffix
+
+	authEngineName := def.Spec.AuthEngineName
+	if authEngineName == "" {
+		authEngineName = defaultAuthEngineName // Default as fallback
+	}
+
 	objectName := slug.Make(fmt.Sprintf("%s %s", def.Meta.Name, env))
-	if noEnvironmentSuffix {
+	if disableEnvSuffix {
 		objectName = slug.Make(def.Meta.Name)
 	}
 
@@ -150,7 +157,8 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		ObjectName:               objectName,
 		Namespaces:               map[string][]tmpSecretModel{},
 		DisableTokenWrap:         noTokenWrap,
-		DisableEnvironmentSuffix: noEnvironmentSuffix,
+		DisableEnvironmentSuffix: disableEnvSuffix,
+		AuthEngineName:           authEngineName,
 	}
 
 	if def.Spec.Namespaces != nil {

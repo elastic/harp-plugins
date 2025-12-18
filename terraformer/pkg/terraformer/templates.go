@@ -63,7 +63,7 @@ resource "vault_policy" "service-{{.ObjectName}}" {
 #
 # Register the backend role
 resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
-  backend   = "service"
+  backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 
   token_policies = [
@@ -93,13 +93,13 @@ data "vault_policy_document" "agent-{{.ObjectName}}" {
 
   rule {
     description  = "Allow agent to retrieve service role-id"
-	path         = "auth/service/role/{{.ObjectName}}/role-id"
+	path         = "auth/{{.AuthEngineName}}/role/{{.ObjectName}}/role-id"
 	capabilities = ["read"]
   }
 
   rule {
 	description      = "Allow agent to retrieve secret-id"
-	path             = "auth/service/role/{{.ObjectName}}/secret-id"
+	path             = "auth/{{.AuthEngineName}}/role/{{.ObjectName}}/secret-id"
 	capabilities     = ["create", "update"]{{ if not .DisableTokenWrap }}
 	min_wrapping_ttl = "1s"  # minimum allowed TTL that clients can specify for a wrapped response
 	max_wrapping_ttl = "90s" # maximum allowed TTL that clients can specify for a wrapped response{{end}}
@@ -116,68 +116,13 @@ resource "vault_policy" "agent-{{.ObjectName}}" {
 #
 # Register the backend role
 resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
-  backend   = "agent"
+  backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 
   token_policies = [
 	"cso-default",
 	"agent-default",
     "agent-{{.ObjectName}}",
-  ]
-}
-`
-
-// ApproleTemplate is the TF >=0.12 Agent template.
-const ApproleTemplate = `# Generated with Harp Terraformer, Don't modify.
-# https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
-# ---
-# SpecificationHash: "{{.SpecHash}}"
-# Owner: "{{.Meta.Owner}}"
-# Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
-# Issues:{{range .Meta.Issues}}
-# - {{.}}{{ end }}
-# ---
-#
-# ------------------------------------------------------------------------------
-
-# Create the policy
-data "vault_policy_document" "approle-{{.ObjectName}}" {
-{{- range $ns, $secrets := .Namespaces }}
-  # {{ $ns }} secrets{{ range $k, $item := $secrets }}
-  rule {
-	description  = "{{$item.Description}}"
-	path         = "{{$item.Path}}"
-    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
-  }
-  {{end -}}
-{{end}}{{if .CustomRules }}
-  # Custom secret paths{{ range $k, $item := .CustomRules }}
-  rule {
-	description  = "{{$item.Description}}"
-	path         = "{{$item.Path}}"
-    capabilities = [{{range $i, $v := $item.Capabilities}}{{if $i}} ,{{end}}{{printf "%q" $v}}{{end}}]
-  }
-  {{end}}{{end -}}
-}
-
-# Register the policy
-resource "vault_policy" "approle-{{.ObjectName}}" {
-  name   = "approle-{{.ObjectName}}"
-  policy = data.vault_policy_document.approle-{{.ObjectName}}.hcl
-}
-
-# ------------------------------------------------------------------------------
-#
-# Register the backend role
-resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
-  backend   = "approle"
-  role_name = "{{.ObjectName}}"
-
-  token_policies = [
-	"cso-default",
-	"service-default",
-    "approle-{{.ObjectName}}",
   ]
 }
 `
@@ -246,6 +191,8 @@ type tmplModel struct {
 	DisableTokenWrap bool
 	// DisableEnvironmentSuffix disable environment suffix in role and policy names
 	DisableEnvironmentSuffix bool
+	// AuthEngineName contains the Vault auth engine backend name
+	AuthEngineName string
 }
 
 type tmpSecretModel struct {

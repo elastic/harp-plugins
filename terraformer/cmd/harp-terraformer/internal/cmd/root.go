@@ -57,7 +57,6 @@ var mainCmd = func() *cobra.Command {
 
 	// Add subcommands
 	cmd.AddCommand(terraformerAgentCmd())
-	cmd.AddCommand(terraformerApproleCmd())
 	cmd.AddCommand(terraformerPolicyCmd())
 	cmd.AddCommand(terraformerServiceCmd())
 

@@ -30,11 +30,11 @@ import (
 
 func Test_compile(t *testing.T) {
 	type args struct {
-		env                 string
-		def                 *terraformerv1.AppRoleDefinition
-		specHash            string
-		noTokenWrap         bool
-		noEnvironmentSuffix bool
+		env                   string
+		def                   *terraformerv1.AppRoleDefinition
+		specHash              string
+		noTokenWrap           bool
+		defaultAuthEngineName string
 	}
 	tests := []struct {
 		name    string
@@ -54,9 +54,8 @@ func Test_compile(t *testing.T) {
 					ApiVersion: "harp.elastic.co/terraformer/v1",
 					Kind:       "AppRoleDefinition",
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: false,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 
 			wantErr: true,
@@ -70,7 +69,6 @@ func Test_compile(t *testing.T) {
 					Kind:       "AppRoleDefinition",
 					Meta:       &terraformerv1.AppRoleDefinitionMeta{},
 				},
-				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -85,7 +83,6 @@ func Test_compile(t *testing.T) {
 						Name: "foo",
 					},
 				},
-				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -101,7 +98,6 @@ func Test_compile(t *testing.T) {
 						Owner: "security@elastic.co",
 					},
 				},
-				noEnvironmentSuffix: false,
 			},
 			wantErr: true,
 		},
@@ -118,9 +114,8 @@ func Test_compile(t *testing.T) {
 						Description: "test",
 					},
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: false,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 			wantErr: true,
 		},
@@ -138,9 +133,8 @@ func Test_compile(t *testing.T) {
 					},
 					Spec: &terraformerv1.AppRoleDefinitionSpec{},
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: false,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 			wantErr: true,
 		},
@@ -160,16 +154,15 @@ func Test_compile(t *testing.T) {
 						Selector: &terraformerv1.AppRoleDefinitionSelector{},
 					},
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: false,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 			wantErr: false,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.noEnvironmentSuffix)
+			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -180,11 +173,11 @@ func Test_compile(t *testing.T) {
 
 func Test_compile_template_object(t *testing.T) {
 	type args struct {
-		env                 string
-		def                 *terraformerv1.AppRoleDefinition
-		specHash            string
-		noTokenWrap         bool
-		noEnvironmentSuffix bool
+		env                   string
+		def                   *terraformerv1.AppRoleDefinition
+		specHash              string
+		noTokenWrap           bool
+		defaultAuthEngineName string
 	}
 	tests := []struct {
 		name    string
@@ -193,7 +186,7 @@ func Test_compile_template_object(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "empty spec selector with noEnvironmentSuffix=true",
+			name: "spec disableEnvironmentSuffix=false (default)",
 			args: args{
 				env: "production",
 				def: &terraformerv1.AppRoleDefinition{
@@ -205,12 +198,12 @@ func Test_compile_template_object(t *testing.T) {
 						Description: "test",
 					},
 					Spec: &terraformerv1.AppRoleDefinitionSpec{
-						Selector: &terraformerv1.AppRoleDefinitionSelector{},
+						Selector:                 &terraformerv1.AppRoleDefinitionSelector{},
+						DisableEnvironmentSuffix: false,
 					},
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: false,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 			want: &tmplModel{
 				Meta: &terraformerv1.AppRoleDefinitionMeta{
@@ -221,12 +214,12 @@ func Test_compile_template_object(t *testing.T) {
 				Environment:              "production",
 				RoleName:                 "foo",
 				ObjectName:               "foo-production",
-				DisableEnvironmentSuffix: true,
+				DisableEnvironmentSuffix: false,
 			},
 			wantErr: false,
 		},
 		{
-			name: "empty spec selector with noEnvironmentSuffix=false",
+			name: "spec disableEnvironmentSuffix=true",
 			args: args{
 				env: "production",
 				def: &terraformerv1.AppRoleDefinition{
@@ -238,12 +231,12 @@ func Test_compile_template_object(t *testing.T) {
 						Description: "test",
 					},
 					Spec: &terraformerv1.AppRoleDefinitionSpec{
-						Selector: &terraformerv1.AppRoleDefinitionSelector{},
+						Selector:                 &terraformerv1.AppRoleDefinitionSelector{},
+						DisableEnvironmentSuffix: true,
 					},
 				},
-				noTokenWrap:         false,
-				noEnvironmentSuffix: true,
-				specHash:            "123456",
+				noTokenWrap: false,
+				specHash:    "123456",
 			},
 			want: &tmplModel{
 				Meta: &terraformerv1.AppRoleDefinitionMeta{
@@ -261,28 +254,29 @@ func Test_compile_template_object(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.noEnvironmentSuffix)
+			res, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
 
-			if res.DisableEnvironmentSuffix != tt.args.noEnvironmentSuffix {
-				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
+			specDisableEnvSuffix := tt.args.def.Spec.DisableEnvironmentSuffix
+			if res.DisableEnvironmentSuffix != specDisableEnvSuffix {
+				t.Errorf("compile() DisableEnvironmentSuffix = %v, want %v", res.DisableEnvironmentSuffix, specDisableEnvSuffix)
 				return
 			}
 
-			switch tt.args.noEnvironmentSuffix {
+			switch specDisableEnvSuffix {
 			case true:
 				expectedObjectName := slug.Make(tt.args.def.Meta.Name)
-				if res.ObjectName != slug.Make(expectedObjectName) {
-					t.Errorf("compile() error = %v, wantErr %v", res.ObjectName, expectedObjectName)
+				if res.ObjectName != expectedObjectName {
+					t.Errorf("compile() ObjectName = %v, want %v", res.ObjectName, expectedObjectName)
 					return
 				}
 			case false:
 				expectedObjectName := slug.Make(fmt.Sprintf("%s-%s", tt.args.def.Meta.Name, tt.args.env))
 				if res.ObjectName != expectedObjectName {
-					t.Errorf("compile() error = %v, wantErr %v", res.ObjectName, expectedObjectName)
+					t.Errorf("compile() ObjectName = %v, want %v", res.ObjectName, expectedObjectName)
 					return
 				}
 			}
@@ -311,19 +305,21 @@ func Test_compile_Fuzz(t *testing.T) {
 		}
 		var specHash string
 		var tokenWrap bool
-		var noEnvSuffix bool
+		var authEngineName string
 
 		// Fuzz input
 		f.Fuzz(&env)
 		f.Fuzz(&spec.Spec.Selector)
 		f.Fuzz(&spec.Spec.Namespaces)
 		f.Fuzz(&spec.Spec.Custom)
+		f.Fuzz(&spec.Spec.DisableEnvironmentSuffix)
+		f.Fuzz(&spec.Spec.AuthEngineName)
 		f.Fuzz(&specHash)
 		f.Fuzz(&tokenWrap)
-		f.Fuzz(&noEnvSuffix)
+		f.Fuzz(&authEngineName)
 
 		// Execute
-		compile(env, spec, specHash, tokenWrap, noEnvSuffix)
+		compile(env, spec, specHash, tokenWrap, authEngineName)
 	}
 }
 
@@ -377,6 +373,93 @@ func Test_filterCapabilities(t *testing.T) {
 			got := filterCapabilities(tt.input)
 			if !reflect.DeepEqual(got, tt.expected) {
 				t.Errorf("filterCapabilities(%v) = %v, want %v", tt.input, got, tt.expected)
+			}
+		})
+	}
+}
+
+func Test_compile_spec_fields(t *testing.T) {
+	// Test that spec fields are the source of truth (GitOps-first)
+	tests := []struct {
+		name                     string
+		specDisableEnvSuffix     bool
+		specAuthEngineName       string
+		defaultAuthEngineName    string
+		expectedDisableEnvSuffix bool
+		expectedAuthEngineName   string
+		expectedObjectNameHasEnv bool
+	}{
+		{
+			name:                     "spec disableEnvironmentSuffix=true",
+			specDisableEnvSuffix:     true,
+			specAuthEngineName:       "",
+			defaultAuthEngineName:    "service",
+			expectedDisableEnvSuffix: true,
+			expectedAuthEngineName:   "service",
+			expectedObjectNameHasEnv: false,
+		},
+		{
+			name:                     "spec authEngineName overrides default",
+			specDisableEnvSuffix:     false,
+			specAuthEngineName:       "custom-approle",
+			defaultAuthEngineName:    "service",
+			expectedDisableEnvSuffix: false,
+			expectedAuthEngineName:   "custom-approle",
+			expectedObjectNameHasEnv: true,
+		},
+		{
+			name:                     "empty spec uses defaults",
+			specDisableEnvSuffix:     false,
+			specAuthEngineName:       "",
+			defaultAuthEngineName:    "service",
+			expectedDisableEnvSuffix: false,
+			expectedAuthEngineName:   "service",
+			expectedObjectNameHasEnv: true,
+		},
+		{
+			name:                     "both spec fields set",
+			specDisableEnvSuffix:     true,
+			specAuthEngineName:       "approle",
+			defaultAuthEngineName:    "service",
+			expectedDisableEnvSuffix: true,
+			expectedAuthEngineName:   "approle",
+			expectedObjectNameHasEnv: false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			def := &terraformerv1.AppRoleDefinition{
+				ApiVersion: "harp.elastic.co/terraformer/v1",
+				Kind:       "AppRoleDefinition",
+				Meta: &terraformerv1.AppRoleDefinitionMeta{
+					Name:        "test-role",
+					Owner:       "security@elastic.co",
+					Description: "test",
+				},
+				Spec: &terraformerv1.AppRoleDefinitionSpec{
+					Selector:                 &terraformerv1.AppRoleDefinitionSelector{},
+					DisableEnvironmentSuffix: tt.specDisableEnvSuffix,
+					AuthEngineName:           tt.specAuthEngineName,
+				},
+			}
+
+			res, err := compile("production", def, "hash", false, tt.defaultAuthEngineName)
+			if err != nil {
+				t.Fatalf("compile() error = %v", err)
+			}
+
+			if res.DisableEnvironmentSuffix != tt.expectedDisableEnvSuffix {
+				t.Errorf("DisableEnvironmentSuffix = %v, want %v", res.DisableEnvironmentSuffix, tt.expectedDisableEnvSuffix)
+			}
+
+			if res.AuthEngineName != tt.expectedAuthEngineName {
+				t.Errorf("AuthEngineName = %v, want %v", res.AuthEngineName, tt.expectedAuthEngineName)
+			}
+
+			hasEnv := res.ObjectName == "test-role-production"
+			if hasEnv != tt.expectedObjectNameHasEnv {
+				t.Errorf("ObjectName = %v, expectedHasEnv = %v", res.ObjectName, tt.expectedObjectNameHasEnv)
 			}
 		})
 	}
