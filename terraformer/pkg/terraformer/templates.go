@@ -63,7 +63,7 @@ resource "vault_policy" "service-{{.ObjectName}}" {
 #
 # Register the backend role
 resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
-  backend   = "service"
+  backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 
   token_policies = [
@@ -93,13 +93,13 @@ data "vault_policy_document" "agent-{{.ObjectName}}" {
 
   rule {
     description  = "Allow agent to retrieve service role-id"
-	path         = "auth/service/role/{{.ObjectName}}/role-id"
+	path         = "auth/{{.AuthEngineName}}/role/{{.ObjectName}}/role-id"
 	capabilities = ["read"]
   }
 
   rule {
 	description      = "Allow agent to retrieve secret-id"
-	path             = "auth/service/role/{{.ObjectName}}/secret-id"
+	path             = "auth/{{.AuthEngineName}}/role/{{.ObjectName}}/secret-id"
 	capabilities     = ["create", "update"]{{ if not .DisableTokenWrap }}
 	min_wrapping_ttl = "1s"  # minimum allowed TTL that clients can specify for a wrapped response
 	max_wrapping_ttl = "90s" # maximum allowed TTL that clients can specify for a wrapped response{{end}}
@@ -116,7 +116,7 @@ resource "vault_policy" "agent-{{.ObjectName}}" {
 #
 # Register the backend role
 resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
-  backend   = "agent"
+  backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 
   token_policies = [
@@ -189,6 +189,10 @@ type tmplModel struct {
 	CustomRules []tmpSecretModel
 	// DisableTokenWrap disable token wrap enforcement
 	DisableTokenWrap bool
+	// DisableEnvironmentSuffix disable environment suffix in role and policy names
+	DisableEnvironmentSuffix bool
+	// AuthEngineName contains the Vault auth engine backend name
+	AuthEngineName string
 }
 
 type tmpSecretModel struct {

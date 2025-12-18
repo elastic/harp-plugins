@@ -73,7 +73,7 @@ func runTerraformerService(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerServiceEnvironment, true, terraformer.ServiceTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerServiceEnvironment, true, "service", terraformer.ServiceTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerServiceInputSpec))
 	}
 }

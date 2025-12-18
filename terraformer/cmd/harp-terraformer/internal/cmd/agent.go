@@ -75,7 +75,7 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, terraformer.AgentTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
 	}
 }

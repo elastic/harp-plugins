@@ -72,8 +72,8 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
 	}
 
-	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, terraformer.PolicyTemplate, writer); err != nil {
+	// Run terraformer (policy template doesn't use auth engine)
+	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 }
