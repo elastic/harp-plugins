@@ -3,15 +3,35 @@ version: '3'
 tasks:
   default:
     cmds:
-      - task: proto
+      - task: generate
 
-  proto:
-    desc: Build Go stub from proto
+  generate:
+    desc: Generate Go and JSON Schema from proto files
     cmds:
-      - rm -rf gen/go && mkdir -p gen/go
-      - find . -name "*.proto" | xargs protoc --go_opt=paths=source_relative --go_out=gen/go -I ./proto
-  json:
-    desc: Build Go stub from proto
+      - buf generate
+      - task: rename-schemas
+
+  rename-schemas:
+    desc: Rename JSON schemas to simple consumer-friendly names
+    dir: gen/jsonschema
     cmds:
-      - rm -rf gen/jsonschema && mkdir -p gen/jsonschema
-      - find . -name "*.proto" | xargs protoc --jsonschema_out=gen/jsonschema --proto_path=proto
+      - |
+        for f in *.jsonschema.bundle.json; do
+          simple=$(echo "$f" | sed 's/.*\.\([A-Z][a-zA-Z]*\)\.jsonschema\.bundle\.json/\1.json/')
+          mv "$f" "$simple"
+        done
+
+  lint:
+    desc: Lint proto files
+    cmds:
+      - buf lint
+
+  breaking:
+    desc: Check for breaking changes against main branch
+    cmds:
+      - buf breaking --against '.git#branch=main'
+
+  format:
+    desc: Format proto files
+    cmds:
+      - buf format -w
