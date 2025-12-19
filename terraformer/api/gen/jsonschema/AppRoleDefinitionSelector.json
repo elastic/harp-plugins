@@ -1,32 +1,38 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "$ref": "#/definitions/AppRoleDefinitionSelector",
-    "definitions": {
-        "AppRoleDefinitionSelector": {
-            "properties": {
-                "environments": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                },
-                "platform": {
-                    "type": "string"
-                },
-                "product": {
-                    "type": "string"
-                },
-                "version": {
-                    "type": "string"
-                },
-                "component": {
-                    "type": "string"
-                }
-            },
-            "additionalProperties": true,
-            "type": "object",
-            "title": "App Role Definition Selector",
-            "description": "AppRoleDefinitionSelector defines secret path generator default values."
+  "$defs": {
+    "harp.terraformer.v1.AppRoleDefinitionSelector.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionSelector defines secret path generator default values.",
+      "properties": {
+        "component": {
+          "default": "",
+          "type": "string"
+        },
+        "environments": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "platform": {
+          "default": "",
+          "type": "string"
+        },
+        "product": {
+          "default": "",
+          "type": "string"
+        },
+        "version": {
+          "default": "",
+          "type": "string"
         }
+      },
+      "title": "App Role Definition Selector",
+      "type": "object"
     }
+  },
+  "$id": "harp.terraformer.v1.AppRoleDefinitionSelector.jsonschema.bundle.json",
+  "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSelector.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

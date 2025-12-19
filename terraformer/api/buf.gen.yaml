@@ -1,0 +1,17 @@
+# For details on buf.gen.yaml configuration, visit https://buf.build/docs/configuration/v2/buf-gen-yaml
+version: v2
+clean: true
+plugins:
+  # Go code generation using remote BSR plugin
+  - remote: buf.build/protocolbuffers/go
+    out: gen/go
+    opt:
+      - paths=source_relative
+  # JSON Schema generation using protoschema plugin
+  # target=json-bundle: camelCase field names, self-contained (all $ref resolved)
+  - remote: buf.build/bufbuild/protoschema-jsonschema
+    out: gen/jsonschema
+    opt:
+      - target=json-bundle
+inputs:
+  - directory: proto

@@ -7,7 +7,6 @@ require (
 	github.com/elastic/harp v0.2.12-0.20250428233149-3127c6a3b720
 	github.com/fatih/color v1.18.0
 	github.com/go-ozzo/ozzo-validation/v4 v4.3.0
-	github.com/golang/protobuf v1.5.4
 	github.com/google/gofuzz v1.2.0
 	github.com/gosimple/slug v1.15.0
 	github.com/hashicorp/hcl/v2 v2.23.0

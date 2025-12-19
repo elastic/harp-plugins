@@ -1,64 +1,69 @@
 {
-    "$schema": "http://json-schema.org/draft-04/schema#",
-    "$ref": "#/definitions/AppRoleDefinitionNamespaces",
-    "definitions": {
-        "AppRoleDefinitionNamespaces": {
-            "properties": {
-                "infrastructure": {
-                    "items": {
-                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
-                    },
-                    "type": "array"
-                },
-                "platform": {
-                    "items": {
-                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
-                    },
-                    "type": "array"
-                },
-                "product": {
-                    "items": {
-                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
-                    },
-                    "type": "array"
-                },
-                "application": {
-                    "items": {
-                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
-                    },
-                    "type": "array"
-                },
-                "artifact": {
-                    "items": {
-                        "$ref": "#/definitions/harp.terraformer.v1.AppRoleDefinitionSecretSuffix"
-                    },
-                    "type": "array"
-                }
-            },
-            "additionalProperties": true,
-            "type": "object",
-            "title": "App Role Definition Namespaces",
-            "description": "AppRoleDefinitionNamespaces defines secret path according to namespaces."
+  "$defs": {
+    "harp.terraformer.v1.AppRoleDefinitionNamespaces.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionNamespaces defines secret path according to namespaces.",
+      "properties": {
+        "application": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json"
+          },
+          "type": "array"
         },
-        "harp.terraformer.v1.AppRoleDefinitionSecretSuffix": {
-            "properties": {
-                "suffix": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "capabilities": {
-                    "items": {
-                        "type": "string"
-                    },
-                    "type": "array"
-                }
-            },
-            "additionalProperties": true,
-            "type": "object",
-            "title": "App Role Definition Secret Suffix",
-            "description": "AppRoleDefinitionSecret defines secret responsibilites."
+        "artifact": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json"
+          },
+          "type": "array"
+        },
+        "infrastructure": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json"
+          },
+          "type": "array"
+        },
+        "platform": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json"
+          },
+          "type": "array"
+        },
+        "product": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json"
+          },
+          "type": "array"
         }
+      },
+      "title": "App Role Definition Namespaces",
+      "type": "object"
+    },
+    "harp.terraformer.v1.AppRoleDefinitionSecretSuffix.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionSecret defines secret responsibilites.",
+      "properties": {
+        "capabilities": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "description": {
+          "default": "",
+          "type": "string"
+        },
+        "suffix": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "title": "App Role Definition Secret Suffix",
+      "type": "object"
     }
+  },
+  "$id": "harp.terraformer.v1.AppRoleDefinitionNamespaces.jsonschema.bundle.json",
+  "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionNamespaces.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
