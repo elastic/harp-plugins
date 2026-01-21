@@ -12,6 +12,7 @@ all: ## Run full build pipeline (default mage target)
 
 tools: ## Install development tools
 	mage tools
+	go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
 
 test: ## Run tests
 	mage test
