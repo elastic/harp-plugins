@@ -12,7 +12,8 @@ A `harp` plugin used to generate Terraform files for `agent` and `service` in CS
 
 ```sh
 export PATH=<harp-repository-path>/tools/bin:$PATH
-$ mage
+go install github.com/magefile/mage@latest`
+mage
 ```
 
 ## Sample

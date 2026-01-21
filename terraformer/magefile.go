@@ -34,6 +34,7 @@ import (
 	"github.com/common-nighthawk/go-figure"
 	"github.com/fatih/color"
 	"github.com/magefile/mage/mg"
+	"github.com/magefile/mage/sh"
 )
 
 var Default = Build
@@ -43,6 +44,28 @@ var descriptor = &artifact.Command{
 	Module:      "cmd/harp-terraformer",
 	Name:        "Harp Terraformer",
 	Description: "Harp CSO Vault Policy generator",
+}
+
+// Tools installs required development tools
+func Tools() error {
+	color.Cyan("## Installing development tools")
+
+	color.Yellow("> Installing gotestsum")
+	if err := sh.RunV("go", "install", "gotest.tools/gotestsum@latest"); err != nil {
+		return err
+	}
+
+	color.Yellow("> Installing wwhrd")
+	if err := sh.RunV("go", "install", "github.com/frapposelli/wwhrd@latest"); err != nil {
+		return err
+	}
+
+	color.Yellow("> Installing golangci-lint")
+	if err := sh.RunV("go", "install", "github.com/golangci/golangci-lint/cmd/golangci-lint@latest"); err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // Build the artefact
