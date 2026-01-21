@@ -10,14 +10,14 @@ help: ## Show this help
 all: ## Run full build pipeline (default mage target)
 	mage build
 
-tools: ## Install development tools
-	mage tools
-	go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
+tools: ## Install development tools (idempotent)
+	@command -v gotestsum >/dev/null 2>&1 || mage tools
+	@command -v cyclonedx-gomod >/dev/null 2>&1 || go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
 
 test: ## Run tests
 	mage test
 
-build: ## Build artifacts
+build: tools ## Build artifacts
 	mage compile
 
 release: ## Cross-compile for release
