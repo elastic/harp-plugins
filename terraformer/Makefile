@@ -12,7 +12,6 @@ all: ## Run full build pipeline (default mage target)
 
 tools: ## Install development tools (idempotent)
 	@command -v gotestsum >/dev/null 2>&1 || mage tools
-	@command -v cyclonedx-gomod >/dev/null 2>&1 || go install github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest
 
 test: ## Run tests
 	mage test

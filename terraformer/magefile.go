@@ -65,6 +65,11 @@ func Tools() error {
 		return err
 	}
 
+	color.Yellow("> Installing cyclonedx-gomod")
+	if err := sh.RunV("go", "install", "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest"); err != nil {
+		return err
+	}
+
 	return nil
 }
 
