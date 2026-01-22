@@ -3,7 +3,7 @@
 
 .DEFAULT_GOAL := help
 
-.PHONY: help all list-all test test-all build-all release-all homebrew-all lint clean
+.PHONY: help all lint clean
 .PHONY: releaser-terraformer
 .PHONY: terraformer terraformer-tools terraformer-test terraformer-build terraformer-release terraformer-homebrew
 
@@ -15,20 +15,6 @@ help: ## Show this help
 ##@ Aggregate Targets
 
 all: terraformer ## Build all plugins (full pipeline)
-
-list-all: ## List all buildable artifacts
-	@echo "Buildable artifacts:"
-	@echo "  harp-terraformer - Harp CSO Vault Policy generator"
-
-test: test-all ## Alias for test-all
-
-test-all: terraformer-test ## Run tests for all plugins
-
-build-all: terraformer-build ## Build all plugin artifacts
-
-release-all: terraformer-release ## Release all plugins
-
-homebrew-all: terraformer-homebrew ## Generate Homebrew formulas for all plugins
 
 lint: ## Lint the Makefile
 	checkmake --config=.checkmake Makefile
