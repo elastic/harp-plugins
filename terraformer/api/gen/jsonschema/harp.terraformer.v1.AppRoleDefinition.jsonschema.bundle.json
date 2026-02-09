@@ -1,5 +1,115 @@
 {
   "$defs": {
+    "harp.terraformer.v1.AppRoleDefinition.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinition represents approle compiler definition.",
+      "patternProperties": {
+        "^(api_version)$": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "apiVersion": {
+          "default": "",
+          "type": "string"
+        },
+        "kind": {
+          "default": "",
+          "type": "string"
+        },
+        "meta": {
+          "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionMeta.jsonschema.json"
+        },
+        "spec": {
+          "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSpec.jsonschema.json"
+        }
+      },
+      "title": "App Role Definition",
+      "type": "object"
+    },
+    "harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionGitHubPermissionSet defines GitHub permission set configuration.",
+      "patternProperties": {
+        "^(installation_id)$": {
+          "default": "",
+          "type": "string"
+        },
+        "^(org_name)$": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "installationId": {
+          "default": "",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "type": "string"
+        },
+        "orgName": {
+          "default": "",
+          "type": "string"
+        },
+        "permissions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "repositories": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "pattern": "^-?[0-9]+$",
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "title": "App Role Definition Git Hub Permission Set",
+      "type": "object"
+    },
+    "harp.terraformer.v1.AppRoleDefinitionMeta.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionSpec handles approle specification details.",
+      "properties": {
+        "description": {
+          "default": "",
+          "type": "string"
+        },
+        "issues": {
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "name": {
+          "default": "",
+          "type": "string"
+        },
+        "owner": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "title": "App Role Definition Meta",
+      "type": "object"
+    },
     "harp.terraformer.v1.AppRoleDefinitionNamespaces.jsonschema.json": {
       "$schema": "https://json-schema.org/draft/2020-12/schema",
       "additionalProperties": false,
@@ -105,6 +215,12 @@
         "^(disable_environment_suffix)$": {
           "default": false,
           "type": "boolean"
+        },
+        "^(github_permission_sets)$": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.json"
+          },
+          "type": "array"
         }
       },
       "properties": {
@@ -122,6 +238,12 @@
           "default": false,
           "type": "boolean"
         },
+        "githubPermissionSets": {
+          "items": {
+            "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.json"
+          },
+          "type": "array"
+        },
         "namespaces": {
           "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionNamespaces.jsonschema.json"
         },
@@ -133,7 +255,7 @@
       "type": "object"
     }
   },
-  "$id": "harp.terraformer.v1.AppRoleDefinitionSpec.jsonschema.bundle.json",
-  "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSpec.jsonschema.json",
+  "$id": "harp.terraformer.v1.AppRoleDefinition.jsonschema.bundle.json",
+  "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinition.jsonschema.json",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }
