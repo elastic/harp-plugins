@@ -214,6 +214,11 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		res.CustomRules = customRules
 	}
 
+	// Process GitHub permission sets
+	if len(def.Spec.GithubPermissionSets) > 0 {
+		res.GitHubPermissionSets = def.Spec.GithubPermissionSets
+	}
+
 	return res, nil
 }
 

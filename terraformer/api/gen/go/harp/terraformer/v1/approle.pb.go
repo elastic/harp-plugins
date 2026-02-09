@@ -175,12 +175,13 @@ func (x *AppRoleDefinitionMeta) GetIssues() []string {
 
 // AppRoleDefinitionSpec handles approle specification details.
 type AppRoleDefinitionSpec struct {
-	state                    protoimpl.MessageState           `protogen:"open.v1"`
-	Selector                 *AppRoleDefinitionSelector       `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
-	Namespaces               *AppRoleDefinitionNamespaces     `protobuf:"bytes,2,opt,name=namespaces,proto3" json:"namespaces,omitempty"`
-	DisableEnvironmentSuffix bool                             `protobuf:"varint,3,opt,name=disable_environment_suffix,json=disableEnvironmentSuffix,proto3" json:"disable_environment_suffix,omitempty"`
-	AuthEngineName           string                           `protobuf:"bytes,4,opt,name=auth_engine_name,json=authEngineName,proto3" json:"auth_engine_name,omitempty"`
-	Custom                   []*AppRoleDefinitionSecretSuffix `protobuf:"bytes,6,rep,name=custom,proto3" json:"custom,omitempty"`
+	state                    protoimpl.MessageState                  `protogen:"open.v1"`
+	Selector                 *AppRoleDefinitionSelector              `protobuf:"bytes,1,opt,name=selector,proto3" json:"selector,omitempty"`
+	Namespaces               *AppRoleDefinitionNamespaces            `protobuf:"bytes,2,opt,name=namespaces,proto3" json:"namespaces,omitempty"`
+	DisableEnvironmentSuffix bool                                    `protobuf:"varint,3,opt,name=disable_environment_suffix,json=disableEnvironmentSuffix,proto3" json:"disable_environment_suffix,omitempty"`
+	AuthEngineName           string                                  `protobuf:"bytes,4,opt,name=auth_engine_name,json=authEngineName,proto3" json:"auth_engine_name,omitempty"`
+	GithubPermissionSets     []*AppRoleDefinitionGitHubPermissionSet `protobuf:"bytes,5,rep,name=github_permission_sets,json=githubPermissionSets,proto3" json:"github_permission_sets,omitempty"`
+	Custom                   []*AppRoleDefinitionSecretSuffix        `protobuf:"bytes,6,rep,name=custom,proto3" json:"custom,omitempty"`
 	unknownFields            protoimpl.UnknownFields
 	sizeCache                protoimpl.SizeCache
 }
@@ -241,6 +242,13 @@ func (x *AppRoleDefinitionSpec) GetAuthEngineName() string {
 		return x.AuthEngineName
 	}
 	return ""
+}
+
+func (x *AppRoleDefinitionSpec) GetGithubPermissionSets() []*AppRoleDefinitionGitHubPermissionSet {
+	if x != nil {
+		return x.GithubPermissionSets
+	}
+	return nil
 }
 
 func (x *AppRoleDefinitionSpec) GetCustom() []*AppRoleDefinitionSecretSuffix {
@@ -465,6 +473,83 @@ func (x *AppRoleDefinitionSecretSuffix) GetCapabilities() []string {
 	return nil
 }
 
+// AppRoleDefinitionGitHubPermissionSet defines GitHub permission set configuration.
+type AppRoleDefinitionGitHubPermissionSet struct {
+	state          protoimpl.MessageState `protogen:"open.v1"`
+	Name           string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	InstallationId string                 `protobuf:"bytes,2,opt,name=installation_id,json=installationId,proto3" json:"installation_id,omitempty"`
+	OrgName        string                 `protobuf:"bytes,3,opt,name=org_name,json=orgName,proto3" json:"org_name,omitempty"`
+	Repositories   []int64                `protobuf:"varint,4,rep,packed,name=repositories,proto3" json:"repositories,omitempty"`
+	Permissions    map[string]string      `protobuf:"bytes,5,rep,name=permissions,proto3" json:"permissions,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) Reset() {
+	*x = AppRoleDefinitionGitHubPermissionSet{}
+	mi := &file_harp_terraformer_v1_approle_proto_msgTypes[6]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*AppRoleDefinitionGitHubPermissionSet) ProtoMessage() {}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) ProtoReflect() protoreflect.Message {
+	mi := &file_harp_terraformer_v1_approle_proto_msgTypes[6]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use AppRoleDefinitionGitHubPermissionSet.ProtoReflect.Descriptor instead.
+func (*AppRoleDefinitionGitHubPermissionSet) Descriptor() ([]byte, []int) {
+	return file_harp_terraformer_v1_approle_proto_rawDescGZIP(), []int{6}
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) GetInstallationId() string {
+	if x != nil {
+		return x.InstallationId
+	}
+	return ""
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) GetOrgName() string {
+	if x != nil {
+		return x.OrgName
+	}
+	return ""
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) GetRepositories() []int64 {
+	if x != nil {
+		return x.Repositories
+	}
+	return nil
+}
+
+func (x *AppRoleDefinitionGitHubPermissionSet) GetPermissions() map[string]string {
+	if x != nil {
+		return x.Permissions
+	}
+	return nil
+}
+
 var File_harp_terraformer_v1_approle_proto protoreflect.FileDescriptor
 
 const file_harp_terraformer_v1_approle_proto_rawDesc = "" +
@@ -480,14 +565,15 @@ const file_harp_terraformer_v1_approle_proto_rawDesc = "" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x14\n" +
 	"\x05owner\x18\x02 \x01(\tR\x05owner\x12 \n" +
 	"\vdescription\x18\x03 \x01(\tR\vdescription\x12\x16\n" +
-	"\x06issues\x18\x04 \x03(\tR\x06issues\"\xe9\x02\n" +
+	"\x06issues\x18\x04 \x03(\tR\x06issues\"\xda\x03\n" +
 	"\x15AppRoleDefinitionSpec\x12J\n" +
 	"\bselector\x18\x01 \x01(\v2..harp.terraformer.v1.AppRoleDefinitionSelectorR\bselector\x12P\n" +
 	"\n" +
 	"namespaces\x18\x02 \x01(\v20.harp.terraformer.v1.AppRoleDefinitionNamespacesR\n" +
 	"namespaces\x12<\n" +
 	"\x1adisable_environment_suffix\x18\x03 \x01(\bR\x18disableEnvironmentSuffix\x12(\n" +
-	"\x10auth_engine_name\x18\x04 \x01(\tR\x0eauthEngineName\x12J\n" +
+	"\x10auth_engine_name\x18\x04 \x01(\tR\x0eauthEngineName\x12o\n" +
+	"\x16github_permission_sets\x18\x05 \x03(\v29.harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSetR\x14githubPermissionSets\x12J\n" +
 	"\x06custom\x18\x06 \x03(\v22.harp.terraformer.v1.AppRoleDefinitionSecretSuffixR\x06custom\"\xad\x01\n" +
 	"\x19AppRoleDefinitionSelector\x12\"\n" +
 	"\fenvironments\x18\x01 \x03(\tR\fenvironments\x12\x1a\n" +
@@ -504,7 +590,16 @@ const file_harp_terraformer_v1_approle_proto_rawDesc = "" +
 	"\x1dAppRoleDefinitionSecretSuffix\x12\x16\n" +
 	"\x06suffix\x18\x01 \x01(\tR\x06suffix\x12 \n" +
 	"\vdescription\x18\x02 \x01(\tR\vdescription\x12\"\n" +
-	"\fcapabilities\x18\x03 \x03(\tR\fcapabilitiesB\xb8\x01\n" +
+	"\fcapabilities\x18\x03 \x03(\tR\fcapabilities\"\xd0\x02\n" +
+	"$AppRoleDefinitionGitHubPermissionSet\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12'\n" +
+	"\x0finstallation_id\x18\x02 \x01(\tR\x0einstallationId\x12\x19\n" +
+	"\borg_name\x18\x03 \x01(\tR\aorgName\x12\"\n" +
+	"\frepositories\x18\x04 \x03(\x03R\frepositories\x12l\n" +
+	"\vpermissions\x18\x05 \x03(\v2J.harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.PermissionsEntryR\vpermissions\x1a>\n" +
+	"\x10PermissionsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\xb8\x01\n" +
 	"/com.github.elastic.cloudsec.harp.terraformer.v1B\fAppRoleProtoP\x01ZCgithub.com/elastic/cst/api/gen/go/harp/terraformer/v1;terraformerv1\xa2\x02\x03HTX\xaa\x02\x13Harp.Terraformer.V1\xca\x02\x13Harp\\Terraformer\\V1b\x06proto3"
 
 var (
@@ -519,31 +614,35 @@ func file_harp_terraformer_v1_approle_proto_rawDescGZIP() []byte {
 	return file_harp_terraformer_v1_approle_proto_rawDescData
 }
 
-var file_harp_terraformer_v1_approle_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_harp_terraformer_v1_approle_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_harp_terraformer_v1_approle_proto_goTypes = []any{
-	(*AppRoleDefinition)(nil),             // 0: harp.terraformer.v1.AppRoleDefinition
-	(*AppRoleDefinitionMeta)(nil),         // 1: harp.terraformer.v1.AppRoleDefinitionMeta
-	(*AppRoleDefinitionSpec)(nil),         // 2: harp.terraformer.v1.AppRoleDefinitionSpec
-	(*AppRoleDefinitionSelector)(nil),     // 3: harp.terraformer.v1.AppRoleDefinitionSelector
-	(*AppRoleDefinitionNamespaces)(nil),   // 4: harp.terraformer.v1.AppRoleDefinitionNamespaces
-	(*AppRoleDefinitionSecretSuffix)(nil), // 5: harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	(*AppRoleDefinition)(nil),                    // 0: harp.terraformer.v1.AppRoleDefinition
+	(*AppRoleDefinitionMeta)(nil),                // 1: harp.terraformer.v1.AppRoleDefinitionMeta
+	(*AppRoleDefinitionSpec)(nil),                // 2: harp.terraformer.v1.AppRoleDefinitionSpec
+	(*AppRoleDefinitionSelector)(nil),            // 3: harp.terraformer.v1.AppRoleDefinitionSelector
+	(*AppRoleDefinitionNamespaces)(nil),          // 4: harp.terraformer.v1.AppRoleDefinitionNamespaces
+	(*AppRoleDefinitionSecretSuffix)(nil),        // 5: harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	(*AppRoleDefinitionGitHubPermissionSet)(nil), // 6: harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet
+	nil, // 7: harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.PermissionsEntry
 }
 var file_harp_terraformer_v1_approle_proto_depIdxs = []int32{
 	1,  // 0: harp.terraformer.v1.AppRoleDefinition.meta:type_name -> harp.terraformer.v1.AppRoleDefinitionMeta
 	2,  // 1: harp.terraformer.v1.AppRoleDefinition.spec:type_name -> harp.terraformer.v1.AppRoleDefinitionSpec
 	3,  // 2: harp.terraformer.v1.AppRoleDefinitionSpec.selector:type_name -> harp.terraformer.v1.AppRoleDefinitionSelector
 	4,  // 3: harp.terraformer.v1.AppRoleDefinitionSpec.namespaces:type_name -> harp.terraformer.v1.AppRoleDefinitionNamespaces
-	5,  // 4: harp.terraformer.v1.AppRoleDefinitionSpec.custom:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	5,  // 5: harp.terraformer.v1.AppRoleDefinitionNamespaces.infrastructure:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	5,  // 6: harp.terraformer.v1.AppRoleDefinitionNamespaces.platform:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	5,  // 7: harp.terraformer.v1.AppRoleDefinitionNamespaces.product:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	5,  // 8: harp.terraformer.v1.AppRoleDefinitionNamespaces.application:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	5,  // 9: harp.terraformer.v1.AppRoleDefinitionNamespaces.artifact:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
-	10, // [10:10] is the sub-list for method output_type
-	10, // [10:10] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	6,  // 4: harp.terraformer.v1.AppRoleDefinitionSpec.github_permission_sets:type_name -> harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet
+	5,  // 5: harp.terraformer.v1.AppRoleDefinitionSpec.custom:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	5,  // 6: harp.terraformer.v1.AppRoleDefinitionNamespaces.infrastructure:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	5,  // 7: harp.terraformer.v1.AppRoleDefinitionNamespaces.platform:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	5,  // 8: harp.terraformer.v1.AppRoleDefinitionNamespaces.product:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	5,  // 9: harp.terraformer.v1.AppRoleDefinitionNamespaces.application:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	5,  // 10: harp.terraformer.v1.AppRoleDefinitionNamespaces.artifact:type_name -> harp.terraformer.v1.AppRoleDefinitionSecretSuffix
+	7,  // 11: harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.permissions:type_name -> harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.PermissionsEntry
+	12, // [12:12] is the sub-list for method output_type
+	12, // [12:12] is the sub-list for method input_type
+	12, // [12:12] is the sub-list for extension type_name
+	12, // [12:12] is the sub-list for extension extendee
+	0,  // [0:12] is the sub-list for field type_name
 }
 
 func init() { file_harp_terraformer_v1_approle_proto_init() }
@@ -557,7 +656,7 @@ func file_harp_terraformer_v1_approle_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_harp_terraformer_v1_approle_proto_rawDesc), len(file_harp_terraformer_v1_approle_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

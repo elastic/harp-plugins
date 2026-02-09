@@ -74,6 +74,46 @@ resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
 }
 `
 
+// GitHubPermissionSetsTemplate is the TF >=0.12 GitHub Permission Sets template.
+const GitHubPermissionSetsTemplate = `# Generated with Harp Terraformer, Don't modify.
+# https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
+# ---
+# SpecificationHash: "{{.SpecHash}}"
+# Owner: "{{.Meta.Owner}}"
+# Date: "{{.Date}}"
+# Description: "{{.Meta.Description}}"
+# Issues:{{range .Meta.Issues}}
+# - {{.}}{{ end }}
+# ---
+#
+# ------------------------------------------------------------------------------
+#
+# GitHub Permission Sets
+{{range $k, $perm := .GitHubPermissionSets}}
+resource "vault_generic_secret" "github-permissionset-{{$perm.Name}}-{{$.Environment}}" {
+  path = "${local.github_secrets_engine_path}/permissionset/{{$perm.Name}}-{{$.Environment}}"
+
+  data_json = jsonencode({
+    installation_id = {{$perm.InstallationId}}
+    org_name        = {{$perm.OrgName}}
+
+    permissions = {
+{{- range $key, $value := $perm.Permissions}}
+      {{$key}} = {{printf "%q" $value}}
+{{- end}}
+    }
+
+    repository_ids = [
+{{- range $i, $repo := $perm.Repositories}}{{if $i}},{{end}}
+      {{$repo}}
+{{- end}}
+    ]
+    repositories = null
+  })
+}
+{{end}}
+`
+
 // AgentTemplate is the TF >=0.12 Agent template.
 const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
@@ -187,6 +227,8 @@ type tmplModel struct {
 	Namespaces map[string][]tmpSecretModel
 	// Non CSO bound secret path
 	CustomRules []tmpSecretModel
+	// GitHub Permission Sets
+	GitHubPermissionSets []*terraformerv1.AppRoleDefinitionGitHubPermissionSet
 	// DisableTokenWrap disable token wrap enforcement
 	DisableTokenWrap bool
 	// DisableEnvironmentSuffix disable environment suffix in role and policy names
