@@ -51,7 +51,7 @@ func Tools() error {
 	color.Cyan("## Installing development tools")
 
 	color.Yellow("> Installing gotestsum")
-	if err := sh.RunV("go", "install", "gotest.tools/gotestsum@latest"); err != nil {
+	if err := sh.RunV("go", "install", "gotest.tools/gotestsum@v1.12.0"); err != nil {
 		return err
 	}
 
@@ -66,7 +66,7 @@ func Tools() error {
 	}
 
 	color.Yellow("> Installing cyclonedx-gomod")
-	if err := sh.RunV("go", "install", "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@latest"); err != nil {
+	if err := sh.RunV("go", "install", "github.com/CycloneDX/cyclonedx-gomod/cmd/cyclonedx-gomod@v1.9.0"); err != nil {
 		return err
 	}
 
