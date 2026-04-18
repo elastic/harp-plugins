@@ -1,0 +1,61 @@
+{
+  "$defs": {
+    "harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.json": {
+      "$schema": "https://json-schema.org/draft/2020-12/schema",
+      "additionalProperties": false,
+      "description": "AppRoleDefinitionGitHubPermissionSet defines GitHub permission set configuration.",
+      "patternProperties": {
+        "^(installation_id)$": {
+          "default": "",
+          "type": "string"
+        },
+        "^(org_name)$": {
+          "default": "",
+          "type": "string"
+        }
+      },
+      "properties": {
+        "installationId": {
+          "default": "",
+          "type": "string"
+        },
+        "name": {
+          "default": "",
+          "type": "string"
+        },
+        "orgName": {
+          "default": "",
+          "type": "string"
+        },
+        "permissions": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "propertyNames": {
+            "type": "string"
+          },
+          "type": "object"
+        },
+        "repositories": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "pattern": "^-?[0-9]+$",
+                "type": "string"
+              }
+            ]
+          },
+          "type": "array"
+        }
+      },
+      "title": "App Role Definition Git Hub Permission Set",
+      "type": "object"
+    }
+  },
+  "$id": "harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.bundle.json",
+  "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionGitHubPermissionSet.jsonschema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
