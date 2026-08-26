@@ -64,11 +64,11 @@ resource "vault_policy" "service-{{.ObjectName}}" {
 # Register the backend role
 resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
   backend   = "{{.AuthEngineName}}"
-  role_name = "{{.ObjectName}}"
+  role_name = "{{.RoleName}}"
 
   token_policies = [
-	"cso-default",
-	"service-default",
+    "cso-default",
+    "service-default",
     "service-{{.ObjectName}}",
   ]
 }
