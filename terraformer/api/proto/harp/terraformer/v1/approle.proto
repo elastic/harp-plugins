@@ -48,6 +48,7 @@ message AppRoleDefinitionSpec {
   AppRoleDefinitionNamespaces namespaces = 2;
   bool disable_environment_suffix = 3;
   string auth_engine_name = 4;
+  repeated AppRoleDefinitionGitHubPermissionSet github_permission_sets = 5;
   repeated AppRoleDefinitionSecretSuffix custom = 6;
 }
 
@@ -74,4 +75,13 @@ message AppRoleDefinitionSecretSuffix {
   string suffix = 1;
   string description = 2;
   repeated string capabilities = 3;
+}
+
+// AppRoleDefinitionGitHubPermissionSet defines GitHub permission set configuration.
+message AppRoleDefinitionGitHubPermissionSet {
+  string name = 1;
+  string installation_id = 2;
+  string org_name = 3;
+  repeated int64 repositories = 4;
+  map<string, string> permissions = 5;
 }
