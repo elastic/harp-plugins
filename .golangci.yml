@@ -8,7 +8,6 @@ run:
   allow-parallel-runners: false
 
 output:
-  sort-results: true
   sort-order:
     - linter
     - severity
