@@ -1,2 +1,3 @@
 golang 1.25.8
 mage 1.15.0
+golangci-lint 2.13.1
