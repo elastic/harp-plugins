@@ -1,6 +1,6 @@
 module github.com/elastic/harp-plugins
 
-go 1.25.8
+go 1.25.14
 
 require (
 	github.com/elastic/harp v0.2.13-0.20260417221752-37e81de9220a
