@@ -1,6 +1,6 @@
 module github.com/elastic/harp-plugins/terraformer
 
-go 1.25.8
+go 1.25.14
 
 require (
 	github.com/common-nighthawk/go-figure v0.0.0-20210622060536-734e95fb86be
