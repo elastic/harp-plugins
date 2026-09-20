@@ -1,0 +1,58 @@
+apiVersion: harp.elastic.co/terraformer/v1
+kind: AppRoleDefinition
+meta:
+  name: example-service
+  owner: platform-team@elastic.co
+  description: Example service with GitHub permissions
+  issues:
+    - JIRA-1234
+spec:
+  selector:
+    environments:
+      - dev
+      - staging
+      - production
+    platform: kubernetes
+    product: example
+    version: v1
+    component: api
+  
+  authEngineName: approle
+  
+  # New GitHub Permission Sets feature
+  githubPermissionSets:
+    - name: "argocd-cluster-registration-controller"
+      installation_id: "local.github_installation_id"
+      org_name: "local.github_organization_name"
+      repositories: [1057520243]
+      permissions:
+        metadata: "read"
+        contents: "write"
+        pull_requests: "write"
+    
+    - name: "ci-deployment-bot"
+      installation_id: "local.github_installation_id"
+      org_name: "local.github_organization_name"
+      repositories: [1057520243, 1057520244]
+      permissions:
+        contents: "read"
+        actions: "write"
+  
+  namespaces:
+    application:
+      - suffix: "database/credentials"
+        description: "Database credentials"
+        capabilities:
+          - read
+      
+      - suffix: "api/keys"
+        description: "API keys for external services"
+        capabilities:
+          - read
+  
+  custom:
+    - suffix: "{{.Env}}/custom/path"
+      description: "Custom secret path"
+      capabilities:
+        - read
+        - list
