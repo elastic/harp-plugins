@@ -323,6 +323,71 @@ func Test_compile_Fuzz(t *testing.T) {
 	}
 }
 
+func Test_compile_custom_rule_description_env_substitution(t *testing.T) {
+	tests := []struct {
+		name        string
+		env         string
+		description string
+		wantDesc    string
+	}{
+		{
+			name:        "no placeholder",
+			env:         "production",
+			description: "ESS puppet ca secrets",
+			wantDesc:    "ESS puppet ca secrets",
+		},
+		{
+			name:        "env placeholder substituted",
+			env:         "dod-il5",
+			description: "ESS puppet ca {env} secrets",
+			wantDesc:    "ESS puppet ca dod-il5 secrets",
+		},
+		{
+			name:        "env is slugified before substitution",
+			env:         "dod il5",
+			description: "ESS puppet ca {env} secrets",
+			wantDesc:    "ESS puppet ca dod-il5 secrets",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			def := &terraformerv1.AppRoleDefinition{
+				ApiVersion: "harp.elastic.co/terraformer/v1",
+				Kind:       "AppRoleDefinition",
+				Meta: &terraformerv1.AppRoleDefinitionMeta{
+					Name:        "puppetca",
+					Owner:       "security@elastic.co",
+					Description: "test",
+				},
+				Spec: &terraformerv1.AppRoleDefinitionSpec{
+					Selector: &terraformerv1.AppRoleDefinitionSelector{},
+					Custom: []*terraformerv1.AppRoleDefinitionSecretSuffix{
+						{
+							Suffix:       "infra/data/+/+/elastic.co/global/pki/puppet/CA/*",
+							Description:  tt.description,
+							Capabilities: []string{"read"},
+						},
+					},
+				},
+			}
+
+			res, err := compile(tt.env, def, "hash", false, "service")
+			if err != nil {
+				t.Fatalf("compile() error = %v", err)
+			}
+
+			if len(res.CustomRules) != 1 {
+				t.Fatalf("expected 1 custom rule, got %d", len(res.CustomRules))
+			}
+
+			if res.CustomRules[0].Description != tt.wantDesc {
+				t.Errorf("Description = %q, want %q", res.CustomRules[0].Description, tt.wantDesc)
+			}
+		})
+	}
+}
+
 func Test_filterCapabilities(t *testing.T) {
 	tests := []struct {
 		name     string

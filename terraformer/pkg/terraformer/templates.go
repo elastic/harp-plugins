@@ -67,8 +67,8 @@ resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
   role_name = "{{.ObjectName}}"
 
   token_policies = [
-	"cso-default",
-	"service-default",
+    "cso-default",
+    "service-default",
     "service-{{.ObjectName}}",
   ]
 }

@@ -204,7 +204,7 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 
 		customRules = append(customRules, tmpSecretModel{
 			Path:         vpath.SanitizePath(customPath),
-			Description:  customRule.Description,
+			Description:  strings.ReplaceAll(customRule.Description, "{env}", res.Environment),
 			Capabilities: filterCapabilities(customRule.Capabilities),
 		})
 	}
