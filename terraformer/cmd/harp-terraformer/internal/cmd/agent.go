@@ -74,16 +74,7 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerAgentOutputPath))
 	}
 
-	// Resolve git provenance when the spec is a real file (not stdin).
-	var src terraformer.SourceInfo
-	if terraformerAgentInputSpec != "-" {
-		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(ctx, terraformerAgentInputSpec)
-		if gitErr == nil {
-			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
-		} else {
-			log.For(ctx).Warn("git provenance unavailable, header fields omitted", zap.Error(gitErr))
-		}
-	}
+	src := resolveSourceInfo(ctx, terraformerAgentInputSpec)
 
 	// Run terraformer
 	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, src, writer); err != nil {

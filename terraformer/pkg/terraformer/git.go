@@ -115,12 +115,15 @@ func parseRepoFromRemoteURL(remoteURL string) string {
 // gitOutput runs a git command inside dir and returns trimmed stdout.
 // When the command fails, stderr from git is included in the returned error.
 func gitOutput(ctx context.Context, dir string, args ...string) (string, error) {
+	if len(args) == 0 {
+		return "", fmt.Errorf("gitOutput: at least one git argument required")
+	}
 	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", dir}, args...)...)
 	out, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
 		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
-			return "", fmt.Errorf("git %s: %w: %s", args[0], err, strings.TrimSpace(string(exitErr.Stderr)))
+			return "", fmt.Errorf("git %s: %s: %w", args[0], strings.TrimSpace(string(exitErr.Stderr)), err)
 		}
 		return "", fmt.Errorf("git %s: %w", args[0], err)
 	}

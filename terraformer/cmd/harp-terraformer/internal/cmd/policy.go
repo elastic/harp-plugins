@@ -72,16 +72,7 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
 	}
 
-	// Resolve git provenance when the spec is a real file (not stdin).
-	var src terraformer.SourceInfo
-	if terraformerPolicyInputSpec != "-" {
-		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(ctx, terraformerPolicyInputSpec)
-		if gitErr == nil {
-			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
-		} else {
-			log.For(ctx).Warn("git provenance unavailable, header fields omitted", zap.Error(gitErr))
-		}
-	}
+	src := resolveSourceInfo(ctx, terraformerPolicyInputSpec)
 
 	// Run terraformer (policy template doesn't use auth engine)
 	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, src, writer); err != nil {
