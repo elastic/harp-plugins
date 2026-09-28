@@ -80,6 +80,8 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(terraformerAgentInputSpec)
 		if gitErr == nil {
 			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
+		} else {
+			log.For(ctx).Warn("git provenance unavailable, header fields omitted", zap.Error(gitErr))
 		}
 	}
 

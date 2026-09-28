@@ -60,6 +60,11 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 			remoteURL: "https://gitlab.example.com/myorg/myrepo.git",
 			want:      "myorg/myrepo",
 		},
+		{
+			name:      "ssh with explicit port",
+			remoteURL: "ssh://git@github.com:22/elastic/harp-plugins.git",
+			want:      "elastic/harp-plugins",
+		},
 	}
 
 	for _, tt := range tests {
@@ -129,5 +134,48 @@ func Test_ResolveGitContext_returnsGitRepo(t *testing.T) {
 	parts := strings.Split(gitRepo, "/")
 	if len(parts) != 2 {
 		t.Errorf("gitRepo %q should be in org/repo form", gitRepo)
+	}
+}
+
+func Test_sanitizeGitString(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		want  string
+	}{
+		{
+			name:  "clean string unchanged",
+			input: "elastic/harp-plugins",
+			want:  "elastic/harp-plugins",
+		},
+		{
+			name:  "embedded newline removed",
+			input: "elastic/harp-plugins\ninjected line",
+			want:  "elastic/harp-pluginsinjected line",
+		},
+		{
+			name:  "embedded carriage return removed",
+			input: "abc123\rmalicious",
+			want:  "abc123malicious",
+		},
+		{
+			name:  "CRLF removed",
+			input: "org/repo\r\nother",
+			want:  "org/repoother",
+		},
+		{
+			name:  "empty string",
+			input: "",
+			want:  "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := sanitizeGitString(tt.input)
+			if got != tt.want {
+				t.Errorf("sanitizeGitString(%q) = %q, want %q", tt.input, got, tt.want)
+			}
+		})
 	}
 }

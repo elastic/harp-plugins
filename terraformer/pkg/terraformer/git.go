@@ -18,10 +18,12 @@
 package terraformer
 
 import (
+	"errors"
 	"fmt"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
 // ResolveGitContext resolves git provenance for the given spec file path.
@@ -39,25 +41,24 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 	specDir := filepath.Dir(absPath)
 
 	// Locate the git root.
-	rootOut, err := gitOutput(specDir, "rev-parse", "--show-toplevel")
+	gitRoot, err := gitOutput(specDir, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
 	}
-	gitRoot := rootOut
 
 	// Compute the repo-relative path, normalised to forward slashes.
 	relPath, err := filepath.Rel(gitRoot, absPath)
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to compute relative path: %w", err)
 	}
-	sourceFile = filepath.ToSlash(relPath)
+	sourceFile = sanitizeGitString(filepath.ToSlash(relPath))
 
 	// Derive the repo name from the remote URL; fall back to the root dir name.
 	remoteOut, remoteErr := gitOutput(specDir, "remote", "get-url", "origin")
 	if remoteErr == nil {
-		gitRepo = parseRepoFromRemoteURL(remoteOut)
+		gitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
 	} else {
-		gitRepo = filepath.Base(gitRoot)
+		gitRepo = sanitizeGitString(filepath.Base(gitRoot))
 	}
 
 	// Resolve HEAD commit hash.
@@ -65,7 +66,7 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to determine git commit: %w", err)
 	}
-	gitCommit = commitOut
+	gitCommit = sanitizeGitString(commitOut)
 
 	// Append +dirty when the spec file has local uncommitted changes.
 	statusOut, statusErr := gitOutput(specDir, "status", "--porcelain", absPath)
@@ -78,18 +79,30 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 
 // parseRepoFromRemoteURL extracts the "org/repo" segment from a git remote URL.
 // Supports HTTPS (https://github.com/org/repo.git) and SSH (git@github.com:org/repo.git) forms.
+// SSH URLs with an explicit port (ssh://git@host:22/org/repo) fall through to the HTTPS path.
 func parseRepoFromRemoteURL(remoteURL string) string {
 	remoteURL = strings.TrimSuffix(remoteURL, ".git")
 
-	// SSH form: git@github.com:org/repo  — the colon is not followed by "//"
+	// SSH form: git@github.com:org/repo  — colon not followed by "//" and not a port number.
 	if idx := strings.LastIndex(remoteURL, ":"); idx >= 0 {
 		candidate := remoteURL[idx+1:]
 		if strings.Contains(candidate, "/") && !strings.HasPrefix(candidate, "//") {
-			return candidate
+			// Reject port numbers: the segment before the first "/" must not be all digits.
+			beforeSlash := candidate[:strings.Index(candidate, "/")]
+			isPort := len(beforeSlash) > 0
+			for _, r := range beforeSlash {
+				if !unicode.IsDigit(r) {
+					isPort = false
+					break
+				}
+			}
+			if !isPort {
+				return candidate
+			}
 		}
 	}
 
-	// HTTPS form: https://host/org/repo — take the last two path segments.
+	// HTTPS (or ssh:// with port) form: take the last two path segments.
 	parts := strings.Split(remoteURL, "/")
 	if len(parts) >= 2 {
 		return strings.Join(parts[len(parts)-2:], "/")
@@ -99,11 +112,27 @@ func parseRepoFromRemoteURL(remoteURL string) string {
 }
 
 // gitOutput runs a git command inside dir and returns trimmed stdout.
+// When the command fails, stderr from git is included in the returned error.
 func gitOutput(dir string, args ...string) (string, error) {
 	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
 	out, err := cmd.Output()
 	if err != nil {
-		return "", err
+		var exitErr *exec.ExitError
+		if errors.As(err, &exitErr) && len(exitErr.Stderr) > 0 {
+			return "", fmt.Errorf("git %s: %w: %s", args[0], err, strings.TrimSpace(string(exitErr.Stderr)))
+		}
+		return "", fmt.Errorf("git %s: %w", args[0], err)
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// sanitizeGitString removes embedded newline characters from git output before
+// it is embedded in HCL comment lines, preventing comment-injection attacks.
+func sanitizeGitString(s string) string {
+	return strings.Map(func(r rune) rune {
+		if r == '\n' || r == '\r' {
+			return -1
+		}
+		return r
+	}, s)
 }
