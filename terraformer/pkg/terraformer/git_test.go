@@ -18,6 +18,7 @@
 package terraformer
 
 import (
+	"context"
 	"os"
 	"path/filepath"
 	"strings"
@@ -84,7 +85,7 @@ func Test_ResolveGitContext_nonGitPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, _, _, err := ResolveGitContext(fakeSpec)
+	_, _, _, err := ResolveGitContext(context.Background(), fakeSpec)
 	if err == nil {
 		t.Error("expected error for path not in a git repo, got nil")
 	}
@@ -92,7 +93,7 @@ func Test_ResolveGitContext_nonGitPath(t *testing.T) {
 
 func Test_ResolveGitContext_withRealRepo(t *testing.T) {
 	// compiler.go is a stable committed file in this package directory.
-	_, sourceFile, gitCommit, err := ResolveGitContext("compiler.go")
+	_, sourceFile, gitCommit, err := ResolveGitContext(context.Background(), "compiler.go")
 	if err != nil {
 		t.Fatalf("ResolveGitContext() error = %v", err)
 	}
@@ -124,12 +125,17 @@ func Test_ResolveGitContext_withRealRepo(t *testing.T) {
 }
 
 func Test_ResolveGitContext_returnsGitRepo(t *testing.T) {
-	gitRepo, _, _, err := ResolveGitContext("compiler.go")
+	gitRepo, _, _, err := ResolveGitContext(context.Background(), "compiler.go")
 	if err != nil {
 		t.Fatalf("ResolveGitContext() error = %v", err)
 	}
 	if gitRepo == "" {
 		t.Error("gitRepo should not be empty")
+	}
+	// When no origin remote is configured (e.g. CI shallow clones), the fallback
+	// is filepath.Base(gitRoot), which is a single segment — skip the shape check.
+	if !strings.Contains(gitRepo, "/") {
+		t.Skipf("gitRepo %q is a bare directory name (no origin remote); skipping org/repo shape check", gitRepo)
 	}
 	parts := strings.Split(gitRepo, "/")
 	if len(parts) != 2 {

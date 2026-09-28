@@ -77,7 +77,7 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 	// Resolve git provenance when the spec is a real file (not stdin).
 	var src terraformer.SourceInfo
 	if terraformerAgentInputSpec != "-" {
-		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(terraformerAgentInputSpec)
+		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(ctx, terraformerAgentInputSpec)
 		if gitErr == nil {
 			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
 		} else {

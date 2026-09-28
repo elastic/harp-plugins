@@ -18,6 +18,7 @@
 package terraformer
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"os/exec"
@@ -32,7 +33,7 @@ import (
 // with "+dirty" when the spec file has uncommitted local changes.
 //
 // Returns an error when the path is not inside a git repository.
-func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, err error) {
+func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFile, gitCommit string, err error) {
 	absPath, err := filepath.Abs(specPath)
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to resolve spec path: %w", err)
@@ -41,7 +42,7 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 	specDir := filepath.Dir(absPath)
 
 	// Locate the git root.
-	gitRoot, err := gitOutput(specDir, "rev-parse", "--show-toplevel")
+	gitRoot, err := gitOutput(ctx, specDir, "rev-parse", "--show-toplevel")
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
 	}
@@ -54,7 +55,7 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 	sourceFile = sanitizeGitString(filepath.ToSlash(relPath))
 
 	// Derive the repo name from the remote URL; fall back to the root dir name.
-	remoteOut, remoteErr := gitOutput(specDir, "remote", "get-url", "origin")
+	remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin")
 	if remoteErr == nil {
 		gitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
 	} else {
@@ -62,14 +63,14 @@ func ResolveGitContext(specPath string) (gitRepo, sourceFile, gitCommit string, 
 	}
 
 	// Resolve HEAD commit hash.
-	commitOut, err := gitOutput(specDir, "rev-parse", "HEAD")
+	commitOut, err := gitOutput(ctx, specDir, "rev-parse", "HEAD")
 	if err != nil {
 		return "", "", "", fmt.Errorf("unable to determine git commit: %w", err)
 	}
 	gitCommit = sanitizeGitString(commitOut)
 
 	// Append +dirty when the spec file has local uncommitted changes.
-	statusOut, statusErr := gitOutput(specDir, "status", "--porcelain", absPath)
+	statusOut, statusErr := gitOutput(ctx, specDir, "status", "--porcelain", absPath)
 	if statusErr == nil && statusOut != "" {
 		gitCommit += "+dirty"
 	}
@@ -113,8 +114,8 @@ func parseRepoFromRemoteURL(remoteURL string) string {
 
 // gitOutput runs a git command inside dir and returns trimmed stdout.
 // When the command fails, stderr from git is included in the returned error.
-func gitOutput(dir string, args ...string) (string, error) {
-	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+func gitOutput(ctx context.Context, dir string, args ...string) (string, error) {
+	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", dir}, args...)...)
 	out, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
