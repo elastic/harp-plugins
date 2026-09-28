@@ -65,11 +65,13 @@ resource "vault_policy" "service-{{.ObjectName}}" {
 resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
   backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
-{{ if .TokenTTL }}
+{{- if .TokenTTL }}
   token_ttl = "{{.TokenTTL}}"
-{{- end }}{{ if .TokenMaxTTL }}
+{{- end }}
+{{- if .TokenMaxTTL }}
   token_max_ttl = "{{.TokenMaxTTL}}"
 {{- end }}
+
   token_policies = [
 	"cso-default",
 	"service-default",
@@ -122,11 +124,13 @@ resource "vault_policy" "agent-{{.ObjectName}}" {
 resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
   backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
-{{ if .TokenTTL }}
+{{- if .TokenTTL }}
   token_ttl = "{{.TokenTTL}}"
-{{- end }}{{ if .TokenMaxTTL }}
+{{- end }}
+{{- if .TokenMaxTTL }}
   token_max_ttl = "{{.TokenMaxTTL}}"
 {{- end }}
+
   token_policies = [
 	"cso-default",
 	"agent-default",
