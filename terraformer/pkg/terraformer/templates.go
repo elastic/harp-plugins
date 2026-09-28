@@ -26,7 +26,10 @@ const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # SpecificationHash: "{{.SpecHash}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
+# GitCommit: "{{.GitCommit}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -81,7 +84,10 @@ const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # SpecificationHash: "{{.SpecHash}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
+# GitCommit: "{{.GitCommit}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -127,14 +133,17 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
 }
 `
 
-// PolicyTemplate is the TF >=0.12 Agent template.
+// PolicyTemplate is the TF >=0.12 Policy template.
 const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
+# GitCommit: "{{.GitCommit}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -193,6 +202,12 @@ type tmplModel struct {
 	DisableEnvironmentSuffix bool
 	// AuthEngineName contains the Vault auth engine backend name
 	AuthEngineName string
+	// GitRepo is the "org/repo" name derived from the git remote (e.g. "elastic/harp-plugins").
+	GitRepo string
+	// SourceFile is the repo-relative path to the spec file that produced this output.
+	SourceFile string
+	// GitCommit is the HEAD commit hash at generation time, with "+dirty" suffix when the spec file had local changes.
+	GitCommit string
 }
 
 type tmpSecretModel struct {

@@ -72,8 +72,17 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
 	}
 
+	// Resolve git provenance when the spec is a real file (not stdin).
+	var src terraformer.SourceInfo
+	if terraformerPolicyInputSpec != "-" {
+		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(terraformerPolicyInputSpec)
+		if gitErr == nil {
+			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
+		}
+	}
+
 	// Run terraformer (policy template doesn't use auth engine)
-	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, src, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 }

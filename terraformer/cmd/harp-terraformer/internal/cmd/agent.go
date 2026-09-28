@@ -74,8 +74,17 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerAgentOutputPath))
 	}
 
+	// Resolve git provenance when the spec is a real file (not stdin).
+	var src terraformer.SourceInfo
+	if terraformerAgentInputSpec != "-" {
+		gitRepo, sourceFile, gitCommit, gitErr := terraformer.ResolveGitContext(terraformerAgentInputSpec)
+		if gitErr == nil {
+			src = terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
+		}
+	}
+
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, src, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
 	}
 }

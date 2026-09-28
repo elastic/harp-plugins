@@ -36,8 +36,15 @@ import (
 
 // -----------------------------------------------------------------------------
 
+// SourceInfo carries optional git provenance metadata embedded in the generated output.
+type SourceInfo struct {
+	GitRepo    string
+	SourceFile string
+	GitCommit  string
+}
+
 // Run the template generation
-func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, defaultAuthEngineName, templateRaw string, w io.Writer) error {
+func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWrap bool, defaultAuthEngineName, templateRaw string, src SourceInfo, w io.Writer) error {
 	// Drain input reader
 	specificationRaw, err := io.ReadAll(reader)
 	if err != nil {
@@ -65,7 +72,7 @@ func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWr
 	specHash := sha256.Sum256(specProto)
 
 	// Compile the definition
-	m, err := compile(environmentParam, def, base64.StdEncoding.EncodeToString(specHash[:]), noTokenWrap, defaultAuthEngineName)
+	m, err := compile(environmentParam, def, base64.StdEncoding.EncodeToString(specHash[:]), noTokenWrap, defaultAuthEngineName, src)
 	if err != nil {
 		return fmt.Errorf("unable to compile specification: %w", err)
 	}
