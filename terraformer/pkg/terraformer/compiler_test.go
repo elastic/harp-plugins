@@ -251,6 +251,95 @@ func Test_compile_template_object(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "spec authEngineName overrides default",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector:       &terraformerv1.AppRoleDefinitionSelector{},
+						AuthEngineName: "custom-approle",
+					},
+				},
+				defaultAuthEngineName: "service",
+				specHash:              "123456",
+			},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "custom-approle"},
+		},
+		{
+			name: "token_ttl propagated",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector: &terraformerv1.AppRoleDefinitionSelector{},
+						TokenTtl: "24h",
+					},
+				},
+				defaultAuthEngineName: "service",
+				specHash:              "123456",
+			},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: "24h"},
+		},
+		{
+			name: "token_max_ttl propagated",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector:    &terraformerv1.AppRoleDefinitionSelector{},
+						TokenMaxTtl: "48h",
+					},
+				},
+				defaultAuthEngineName: "service",
+				specHash:              "123456",
+			},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenMaxTTL: "48h"},
+		},
+		{
+			name: "both token ttl fields propagated",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector:    &terraformerv1.AppRoleDefinitionSelector{},
+						TokenTtl:    "24h",
+						TokenMaxTtl: "48h",
+					},
+				},
+				defaultAuthEngineName: "service",
+				specHash:              "123456",
+			},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: "24h", TokenMaxTTL: "48h"},
+		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -278,6 +367,18 @@ func Test_compile_template_object(t *testing.T) {
 				if res.ObjectName != expectedObjectName {
 					t.Errorf("compile() ObjectName = %v, want %v", res.ObjectName, expectedObjectName)
 					return
+				}
+			}
+
+			if tt.want != nil {
+				if res.AuthEngineName != tt.want.AuthEngineName {
+					t.Errorf("compile() AuthEngineName = %v, want %v", res.AuthEngineName, tt.want.AuthEngineName)
+				}
+				if res.TokenTTL != tt.want.TokenTTL {
+					t.Errorf("compile() TokenTTL = %v, want %v", res.TokenTTL, tt.want.TokenTTL)
+				}
+				if res.TokenMaxTTL != tt.want.TokenMaxTTL {
+					t.Errorf("compile() TokenMaxTTL = %v, want %v", res.TokenMaxTTL, tt.want.TokenMaxTTL)
 				}
 			}
 		})

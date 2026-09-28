@@ -159,6 +159,8 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		DisableTokenWrap:         noTokenWrap,
 		DisableEnvironmentSuffix: disableEnvSuffix,
 		AuthEngineName:           authEngineName,
+		TokenTTL:                 def.Spec.TokenTtl,
+		TokenMaxTTL:              def.Spec.TokenMaxTtl,
 	}
 
 	if def.Spec.Namespaces != nil {

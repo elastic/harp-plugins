@@ -105,6 +105,14 @@
         "^(disable_environment_suffix)$": {
           "default": false,
           "type": "boolean"
+        },
+        "^(token_ttl)$": {
+          "default": "",
+          "type": "string"
+        },
+        "^(token_max_ttl)$": {
+          "default": "",
+          "type": "string"
         }
       },
       "properties": {
@@ -127,6 +135,14 @@
         },
         "selector": {
           "$ref": "#/$defs/harp.terraformer.v1.AppRoleDefinitionSelector.jsonschema.json"
+        },
+        "tokenTtl": {
+          "default": "",
+          "type": "string"
+        },
+        "tokenMaxTtl": {
+          "default": "",
+          "type": "string"
         }
       },
       "title": "App Role Definition Spec",

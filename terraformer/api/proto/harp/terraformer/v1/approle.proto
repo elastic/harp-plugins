@@ -49,6 +49,12 @@ message AppRoleDefinitionSpec {
   bool disable_environment_suffix = 3;
   string auth_engine_name = 4;
   repeated AppRoleDefinitionSecretSuffix custom = 6;
+  // token_ttl overrides the mount-level default_lease_ttl for tokens issued
+  // by this AppRole (e.g. "24h"). Leave empty to inherit the mount default.
+  string token_ttl = 7;
+  // token_max_ttl caps the maximum lifetime for tokens issued by this AppRole
+  // (e.g. "48h"). Leave empty to inherit the mount default.
+  string token_max_ttl = 8;
 }
 
 // AppRoleDefinitionSelector defines secret path generator default values.
