@@ -148,6 +148,25 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		objectName = slug.Make(def.Meta.Name)
 	}
 
+	var tokenTTL, tokenMaxTTL int64
+	if def.Spec.TokenTtl != "" {
+		d, err := time.ParseDuration(def.Spec.TokenTtl)
+		if err != nil {
+			return nil, fmt.Errorf("invalid token_ttl %q: %w", def.Spec.TokenTtl, err)
+		}
+		tokenTTL = int64(d.Seconds())
+	}
+	if def.Spec.TokenMaxTtl != "" {
+		d, err := time.ParseDuration(def.Spec.TokenMaxTtl)
+		if err != nil {
+			return nil, fmt.Errorf("invalid token_max_ttl %q: %w", def.Spec.TokenMaxTtl, err)
+		}
+		tokenMaxTTL = int64(d.Seconds())
+	}
+	if tokenTTL > 0 && tokenMaxTTL > 0 && tokenTTL > tokenMaxTTL {
+		return nil, fmt.Errorf("token_ttl (%ds) must not exceed token_max_ttl (%ds)", tokenTTL, tokenMaxTTL)
+	}
+
 	res := &tmplModel{
 		Date:                     time.Now().UTC().Format(time.RFC3339),
 		SpecHash:                 specHash,
@@ -159,6 +178,8 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		DisableTokenWrap:         noTokenWrap,
 		DisableEnvironmentSuffix: disableEnvSuffix,
 		AuthEngineName:           authEngineName,
+		TokenTTL:                 tokenTTL,
+		TokenMaxTTL:              tokenMaxTTL,
 	}
 
 	if def.Spec.Namespaces != nil {
