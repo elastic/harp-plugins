@@ -66,10 +66,10 @@ resource "vault_approle_auth_backend_role" "{{.ObjectName}}" {
   backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 {{- if .TokenTTL }}
-  token_ttl = "{{.TokenTTL}}"
+  token_ttl = {{.TokenTTL}}
 {{- end }}
 {{- if .TokenMaxTTL }}
-  token_max_ttl = "{{.TokenMaxTTL}}"
+  token_max_ttl = {{.TokenMaxTTL}}
 {{- end }}
 
   token_policies = [
@@ -125,10 +125,10 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
   backend   = "{{.AuthEngineName}}"
   role_name = "{{.ObjectName}}"
 {{- if .TokenTTL }}
-  token_ttl = "{{.TokenTTL}}"
+  token_ttl = {{.TokenTTL}}
 {{- end }}
 {{- if .TokenMaxTTL }}
-  token_max_ttl = "{{.TokenMaxTTL}}"
+  token_max_ttl = {{.TokenMaxTTL}}
 {{- end }}
 
   token_policies = [
@@ -205,12 +205,12 @@ type tmplModel struct {
 	DisableEnvironmentSuffix bool
 	// AuthEngineName contains the Vault auth engine backend name
 	AuthEngineName string
-	// TokenTTL overrides the mount-level default_lease_ttl for issued tokens (e.g. "24h").
-	// Empty means inherit the mount default.
-	TokenTTL string
-	// TokenMaxTTL caps the maximum lifetime for issued tokens (e.g. "48h").
-	// Empty means inherit the mount default.
-	TokenMaxTTL string
+	// TokenTTL overrides the mount-level default_lease_ttl for issued tokens, in seconds.
+	// Zero means inherit the mount default.
+	TokenTTL int64
+	// TokenMaxTTL caps the maximum lifetime for issued tokens, in seconds.
+	// Zero means inherit the mount default.
+	TokenMaxTTL int64
 }
 
 type tmpSecretModel struct {

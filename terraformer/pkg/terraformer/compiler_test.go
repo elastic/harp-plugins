@@ -360,7 +360,7 @@ func Test_compile_template_object(t *testing.T) {
 				defaultAuthEngineName: "service",
 				specHash:              "123456",
 			},
-			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: "24h"},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: 86400},
 		},
 		{
 			name: "token_max_ttl propagated",
@@ -382,7 +382,7 @@ func Test_compile_template_object(t *testing.T) {
 				defaultAuthEngineName: "service",
 				specHash:              "123456",
 			},
-			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenMaxTTL: "48h"},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenMaxTTL: 172800},
 		},
 		{
 			name: "both token ttl fields propagated",
@@ -405,7 +405,7 @@ func Test_compile_template_object(t *testing.T) {
 				defaultAuthEngineName: "service",
 				specHash:              "123456",
 			},
-			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: "24h", TokenMaxTTL: "48h"},
+			want: &tmplModel{ObjectName: "foo-production", AuthEngineName: "service", TokenTTL: 86400, TokenMaxTTL: 172800},
 		},
 	}
 	for _, tt := range tests {

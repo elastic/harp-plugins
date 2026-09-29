@@ -50,10 +50,14 @@ message AppRoleDefinitionSpec {
   string auth_engine_name = 4;
   repeated AppRoleDefinitionSecretSuffix custom = 6;
   // token_ttl overrides the mount-level default_lease_ttl for tokens issued
-  // by this AppRole (e.g. "24h"). Leave empty to inherit the mount default.
+  // by this AppRole. Accepts Go duration strings (e.g. "24h", "90m") which
+  // are converted to integer seconds before being emitted into HCL.
+  // Leave empty to inherit the mount default.
   string token_ttl = 7;
-  // token_max_ttl caps the maximum lifetime for tokens issued by this AppRole
-  // (e.g. "48h"). Leave empty to inherit the mount default.
+  // token_max_ttl caps the maximum lifetime for tokens issued by this AppRole.
+  // Accepts Go duration strings (e.g. "48h", "720m") which are converted to
+  // integer seconds before being emitted into HCL. Must be >= token_ttl when
+  // both are set. Leave empty to inherit the mount default.
   string token_max_ttl = 8;
 }
 
