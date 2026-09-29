@@ -18,9 +18,12 @@
 package terraformer
 
 import (
+	"bytes"
 	"fmt"
 	"reflect"
+	"strings"
 	"testing"
+	"text/template"
 
 	"github.com/gosimple/slug"
 
@@ -158,6 +161,70 @@ func Test_compile(t *testing.T) {
 				specHash:    "123456",
 			},
 			wantErr: false,
+		},
+		{
+			name: "invalid token_ttl",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector: &terraformerv1.AppRoleDefinitionSelector{},
+						TokenTtl: "notaduration",
+					},
+				},
+				specHash: "123456",
+			},
+			wantErr: true,
+		},
+		{
+			name: "invalid token_max_ttl",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector:    &terraformerv1.AppRoleDefinitionSelector{},
+						TokenMaxTtl: "notaduration",
+					},
+				},
+				specHash: "123456",
+			},
+			wantErr: true,
+		},
+		{
+			name: "token_ttl greater than token_max_ttl",
+			args: args{
+				env: "production",
+				def: &terraformerv1.AppRoleDefinition{
+					ApiVersion: "harp.elastic.co/terraformer/v1",
+					Kind:       "AppRoleDefinition",
+					Meta: &terraformerv1.AppRoleDefinitionMeta{
+						Name:        "foo",
+						Owner:       "security@elastic.co",
+						Description: "test",
+					},
+					Spec: &terraformerv1.AppRoleDefinitionSpec{
+						Selector:    &terraformerv1.AppRoleDefinitionSelector{},
+						TokenTtl:    "48h",
+						TokenMaxTtl: "24h",
+					},
+				},
+				specHash: "123456",
+			},
+			wantErr: true,
 		},
 	}
 	for _, tt := range tests {
@@ -477,6 +544,78 @@ func Test_filterCapabilities(t *testing.T) {
 			}
 		})
 	}
+}
+
+func Test_template_render(t *testing.T) {
+	model := &tmplModel{
+		SpecHash: "abc123",
+		Meta: &terraformerv1.AppRoleDefinitionMeta{
+			Name:        "test",
+			Owner:       "o@elastic.co",
+			Description: "desc",
+		},
+		Date:           "2024-01-01T00:00:00Z",
+		Environment:    "production",
+		RoleName:       "test",
+		ObjectName:     "test-production",
+		Namespaces:     map[string][]tmpSecretModel{},
+		AuthEngineName: "approle",
+		TokenTTL:       86400,
+		TokenMaxTTL:    172800,
+	}
+
+	execTemplate := func(t *testing.T, raw string, m *tmplModel) string {
+		t.Helper()
+		tmpl, err := template.New("tf").Parse(raw)
+		if err != nil {
+			t.Fatalf("parse template: %v", err)
+		}
+		var buf bytes.Buffer
+		if err := tmpl.Execute(&buf, m); err != nil {
+			t.Fatalf("execute template: %v", err)
+		}
+		return buf.String()
+	}
+
+	t.Run("ServiceTemplate emits integer TTL unquoted", func(t *testing.T) {
+		out := execTemplate(t, ServiceTemplate, model)
+		if !strings.Contains(out, "token_ttl = 86400") {
+			t.Errorf("ServiceTemplate: want 'token_ttl = 86400' (unquoted integer); got:\n%s", out)
+		}
+		if !strings.Contains(out, "token_max_ttl = 172800") {
+			t.Errorf("ServiceTemplate: want 'token_max_ttl = 172800' (unquoted integer); got:\n%s", out)
+		}
+	})
+
+	t.Run("AgentTemplate emits integer TTL unquoted", func(t *testing.T) {
+		out := execTemplate(t, AgentTemplate, model)
+		if !strings.Contains(out, "token_ttl = 86400") {
+			t.Errorf("AgentTemplate: want 'token_ttl = 86400' (unquoted integer); got:\n%s", out)
+		}
+		if !strings.Contains(out, "token_max_ttl = 172800") {
+			t.Errorf("AgentTemplate: want 'token_max_ttl = 172800' (unquoted integer); got:\n%s", out)
+		}
+	})
+
+	t.Run("ServiceTemplate omits TTL fields when zero", func(t *testing.T) {
+		noTTL := *model
+		noTTL.TokenTTL = 0
+		noTTL.TokenMaxTTL = 0
+		out := execTemplate(t, ServiceTemplate, &noTTL)
+		if strings.Contains(out, "token_ttl") {
+			t.Errorf("ServiceTemplate: should not emit token_ttl when zero; got:\n%s", out)
+		}
+	})
+
+	t.Run("AgentTemplate omits TTL fields when zero", func(t *testing.T) {
+		noTTL := *model
+		noTTL.TokenTTL = 0
+		noTTL.TokenMaxTTL = 0
+		out := execTemplate(t, AgentTemplate, &noTTL)
+		if strings.Contains(out, "token_ttl") {
+			t.Errorf("AgentTemplate: should not emit token_ttl when zero; got:\n%s", out)
+		}
+	})
 }
 
 func Test_compile_spec_fields(t *testing.T) {
