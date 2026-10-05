@@ -36,11 +36,10 @@ import (
 
 // -----------------------------------------------------------------------------
 
-// SourceInfo carries optional git provenance metadata embedded in the generated output.
+// SourceInfo carries optional source provenance metadata embedded in the generated output.
 type SourceInfo struct {
 	GitRepo    string
 	SourceFile string
-	GitCommit  string
 }
 
 // Run the template generation

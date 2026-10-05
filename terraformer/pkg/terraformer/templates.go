@@ -28,8 +28,7 @@ const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
 # GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
-# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
-# GitCommit: "{{.GitCommit}}"{{end}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -86,8 +85,7 @@ const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
 # GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
-# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
-# GitCommit: "{{.GitCommit}}"{{end}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -142,8 +140,7 @@ const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
 # GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
-# SourceFile: "{{.SourceFile}}"{{end}}{{if .GitCommit}}
-# GitCommit: "{{.GitCommit}}"{{end}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -206,8 +203,6 @@ type tmplModel struct {
 	GitRepo string
 	// SourceFile is the repo-relative path to the spec file that produced this output.
 	SourceFile string
-	// GitCommit is the HEAD commit hash at generation time, with "+dirty" suffix when the spec file had local changes.
-	GitCommit string
 }
 
 type tmpSecretModel struct {

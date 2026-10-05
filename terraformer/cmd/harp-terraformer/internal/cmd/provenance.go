@@ -26,16 +26,16 @@ import (
 	"github.com/elastic/harp/pkg/sdk/log"
 )
 
-// resolveSourceInfo attempts to derive git provenance for specPath.
+// resolveSourceInfo attempts to derive repo and file provenance for specPath.
 // Returns a zero-value SourceInfo when specPath is stdin ("-") or git is unavailable.
 func resolveSourceInfo(ctx context.Context, specPath string) terraformer.SourceInfo {
 	if specPath == "-" {
 		return terraformer.SourceInfo{}
 	}
-	gitRepo, sourceFile, gitCommit, err := terraformer.ResolveGitContext(ctx, specPath)
+	gitRepo, sourceFile, err := terraformer.ResolveGitContext(ctx, specPath)
 	if err != nil {
-		log.For(ctx).Warn("git provenance unavailable, header fields omitted", zap.Error(err))
+		log.For(ctx).Warn("source provenance unavailable, header fields omitted", zap.Error(err))
 		return terraformer.SourceInfo{}
 	}
-	return terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile, GitCommit: gitCommit}
+	return terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile}
 }

@@ -63,7 +63,6 @@ func Test_Run_sourceInfo_renderedInOutput(t *testing.T) {
 	src := SourceInfo{
 		GitRepo:    "elastic/harp-plugins",
 		SourceFile: "terraformer/spec.yaml",
-		GitCommit:  "abc123def456+dirty",
 	}
 
 	var out bytes.Buffer
@@ -76,7 +75,6 @@ func Test_Run_sourceInfo_renderedInOutput(t *testing.T) {
 	for _, want := range []string{
 		`# GitRepo: "elastic/harp-plugins"`,
 		`# SourceFile: "terraformer/spec.yaml"`,
-		`# GitCommit: "abc123def456+dirty"`,
 	} {
 		if !strings.Contains(output, want) {
 			t.Errorf("output missing %q\nfull output:\n%s", want, output)
@@ -92,7 +90,7 @@ func Test_Run_emptySourceInfo_omitsGitLines(t *testing.T) {
 	}
 
 	output := out.String()
-	for _, absent := range []string{"GitRepo", "SourceFile", "GitCommit"} {
+	for _, absent := range []string{"GitRepo", "SourceFile"} {
 		if strings.Contains(output, "# "+absent+":") {
 			t.Errorf("output should not contain %q line when SourceInfo is empty\nfull output:\n%s", absent, output)
 		}
@@ -119,7 +117,6 @@ func Test_Run_allTemplates_sourceInfo(t *testing.T) {
 	src := SourceInfo{
 		GitRepo:    "elastic/harp-plugins",
 		SourceFile: "spec.yaml",
-		GitCommit:  "deadbeef",
 	}
 
 	templates := []struct {
@@ -145,9 +142,6 @@ func Test_Run_allTemplates_sourceInfo(t *testing.T) {
 			}
 			if !strings.Contains(output, `# SourceFile: "spec.yaml"`) {
 				t.Errorf("%s template: output missing SourceFile line\nfull output:\n%s", tmpl.name, output)
-			}
-			if !strings.Contains(output, `# GitCommit: "deadbeef"`) {
-				t.Errorf("%s template: output missing GitCommit line\nfull output:\n%s", tmpl.name, output)
 			}
 		})
 	}

@@ -482,7 +482,6 @@ func Test_compile_sourceInfo(t *testing.T) {
 	src := SourceInfo{
 		GitRepo:    "elastic/harp-plugins",
 		SourceFile: "terraformer/infra/vault/spec.yaml",
-		GitCommit:  "abc123def456+dirty",
 	}
 
 	res, err := compile("production", def, "hash", false, "service", src)
@@ -495,9 +494,6 @@ func Test_compile_sourceInfo(t *testing.T) {
 	}
 	if res.SourceFile != src.SourceFile {
 		t.Errorf("SourceFile = %q, want %q", res.SourceFile, src.SourceFile)
-	}
-	if res.GitCommit != src.GitCommit {
-		t.Errorf("GitCommit = %q, want %q", res.GitCommit, src.GitCommit)
 	}
 }
 
@@ -525,8 +521,5 @@ func Test_compile_sourceInfo_empty(t *testing.T) {
 	}
 	if res.SourceFile != "" {
 		t.Errorf("SourceFile should be empty when SourceInfo is zero, got %q", res.SourceFile)
-	}
-	if res.GitCommit != "" {
-		t.Errorf("GitCommit should be empty when SourceInfo is zero, got %q", res.GitCommit)
 	}
 }

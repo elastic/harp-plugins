@@ -24,19 +24,24 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
-	"unicode"
 )
 
-// ResolveGitContext resolves git provenance for the given spec file path.
-// It returns the repo name (e.g. "elastic/harp-plugins"), the repo-relative
-// path to the file, and the HEAD commit hash. The commit hash is suffixed
-// with "+dirty" when the spec file has uncommitted local changes.
+// ResolveGitContext resolves source provenance for the given spec file path.
+// It returns the repo name (e.g. "elastic/harp-plugins") and the repo-relative
+// path to the file. The repo name is empty when the repository has no origin
+// remote.
 //
 // Returns an error when the path is not inside a git repository.
-func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFile, gitCommit string, err error) {
+func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFile string, err error) {
 	absPath, err := filepath.Abs(specPath)
 	if err != nil {
-		return "", "", "", fmt.Errorf("unable to resolve spec path: %w", err)
+		return "", "", fmt.Errorf("unable to resolve spec path: %w", err)
+	}
+
+	// git reports the symlink-resolved root, so resolve the spec path the same
+	// way to keep the repo-relative path correct (e.g. /var -> /private/var).
+	if resolved, evalErr := filepath.EvalSymlinks(absPath); evalErr == nil {
+		absPath = resolved
 	}
 
 	specDir := filepath.Dir(absPath)
@@ -44,69 +49,43 @@ func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFil
 	// Locate the git root.
 	gitRoot, err := gitOutput(ctx, specDir, "rev-parse", "--show-toplevel")
 	if err != nil {
-		return "", "", "", fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
+		return "", "", fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
 	}
 
 	// Compute the repo-relative path, normalised to forward slashes.
 	relPath, err := filepath.Rel(gitRoot, absPath)
 	if err != nil {
-		return "", "", "", fmt.Errorf("unable to compute relative path: %w", err)
+		return "", "", fmt.Errorf("unable to compute relative path: %w", err)
 	}
 	sourceFile = sanitizeGitString(filepath.ToSlash(relPath))
 
-	// Derive the repo name from the remote URL; fall back to the root dir name.
-	remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin")
-	if remoteErr == nil {
+	// Derive the repo name from the remote URL. Without an origin remote the
+	// name is left empty rather than guessed from the local directory name.
+	if remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin"); remoteErr == nil {
 		gitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
-	} else {
-		gitRepo = sanitizeGitString(filepath.Base(gitRoot))
 	}
 
-	// Resolve HEAD commit hash.
-	commitOut, err := gitOutput(ctx, specDir, "rev-parse", "HEAD")
-	if err != nil {
-		return "", "", "", fmt.Errorf("unable to determine git commit: %w", err)
-	}
-	gitCommit = sanitizeGitString(commitOut)
-
-	// Append +dirty when the spec file has local uncommitted changes.
-	statusOut, statusErr := gitOutput(ctx, specDir, "status", "--porcelain", absPath)
-	if statusErr == nil && statusOut != "" {
-		gitCommit += "+dirty"
-	}
-
-	return gitRepo, sourceFile, gitCommit, nil
+	return gitRepo, sourceFile, nil
 }
 
-// parseRepoFromRemoteURL extracts the "org/repo" segment from a git remote URL.
-// Supports HTTPS (https://github.com/org/repo.git) and SSH (git@github.com:org/repo.git) forms.
-// SSH URLs with an explicit port (ssh://git@host:22/org/repo) fall through to the HTTPS path.
+// parseRepoFromRemoteURL extracts the repository path ("org/repo", or
+// "group/subgroup/repo" for nested namespaces) from a git remote URL.
+// Supports URL forms (https://host/org/repo.git, ssh://git@host:22/org/repo)
+// and scp-like SSH (git@host:org/repo.git).
 func parseRepoFromRemoteURL(remoteURL string) string {
-	remoteURL = strings.TrimSuffix(remoteURL, ".git")
+	remoteURL = strings.TrimSuffix(strings.TrimSpace(remoteURL), ".git")
 
-	// SSH form: git@github.com:org/repo  — colon not followed by "//" and not a port number.
-	if idx := strings.LastIndex(remoteURL, ":"); idx >= 0 {
-		candidate := remoteURL[idx+1:]
-		if strings.Contains(candidate, "/") && !strings.HasPrefix(candidate, "//") {
-			// Reject port numbers: the segment before the first "/" must not be all digits.
-			beforeSlash := candidate[:strings.Index(candidate, "/")]
-			isPort := len(beforeSlash) > 0
-			for _, r := range beforeSlash {
-				if !unicode.IsDigit(r) {
-					isPort = false
-					break
-				}
-			}
-			if !isPort {
-				return candidate
-			}
+	// URL form: everything after the host is the repo path.
+	if _, rest, ok := strings.Cut(remoteURL, "://"); ok {
+		if _, path, found := strings.Cut(rest, "/"); found {
+			return strings.Trim(path, "/")
 		}
+		return remoteURL
 	}
 
-	// HTTPS (or ssh:// with port) form: take the last two path segments.
-	parts := strings.Split(remoteURL, "/")
-	if len(parts) >= 2 {
-		return strings.Join(parts[len(parts)-2:], "/")
+	// scp-like form: host:path
+	if _, path, ok := strings.Cut(remoteURL, ":"); ok {
+		return strings.Trim(path, "/")
 	}
 
 	return remoteURL

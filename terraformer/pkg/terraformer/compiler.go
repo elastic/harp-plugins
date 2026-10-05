@@ -161,7 +161,6 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		AuthEngineName:           authEngineName,
 		GitRepo:                  src.GitRepo,
 		SourceFile:               src.SourceFile,
-		GitCommit:                src.GitCommit,
 	}
 
 	if def.Spec.Namespaces != nil {

@@ -20,6 +20,7 @@ package terraformer
 import (
 	"context"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -66,6 +67,21 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 			remoteURL: "ssh://git@github.com:22/elastic/harp-plugins.git",
 			want:      "elastic/harp-plugins",
 		},
+		{
+			name:      "gitlab https nested subgroup",
+			remoteURL: "https://gitlab.com/group/subgroup/repo.git",
+			want:      "group/subgroup/repo",
+		},
+		{
+			name:      "gitlab ssh nested subgroup",
+			remoteURL: "git@gitlab.com:group/subgroup/repo.git",
+			want:      "group/subgroup/repo",
+		},
+		{
+			name:      "ssh url nested subgroup with port",
+			remoteURL: "ssh://git@gitlab.com:2222/group/subgroup/repo.git",
+			want:      "group/subgroup/repo",
+		},
 	}
 
 	for _, tt := range tests {
@@ -85,7 +101,7 @@ func Test_ResolveGitContext_nonGitPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, _, _, err := ResolveGitContext(context.Background(), fakeSpec)
+	_, _, err := ResolveGitContext(context.Background(), fakeSpec)
 	if err == nil {
 		t.Error("expected error for path not in a git repo, got nil")
 	}
@@ -93,16 +109,9 @@ func Test_ResolveGitContext_nonGitPath(t *testing.T) {
 
 func Test_ResolveGitContext_withRealRepo(t *testing.T) {
 	// compiler.go is a stable committed file in this package directory.
-	_, sourceFile, gitCommit, err := ResolveGitContext(context.Background(), "compiler.go")
+	_, sourceFile, err := ResolveGitContext(context.Background(), "compiler.go")
 	if err != nil {
 		t.Fatalf("ResolveGitContext() error = %v", err)
-	}
-
-	if sourceFile == "" {
-		t.Error("sourceFile should not be empty")
-	}
-	if gitCommit == "" {
-		t.Error("gitCommit should not be empty")
 	}
 
 	if !strings.HasSuffix(sourceFile, "compiler.go") {
@@ -111,35 +120,33 @@ func Test_ResolveGitContext_withRealRepo(t *testing.T) {
 	if strings.Contains(sourceFile, "\\") {
 		t.Errorf("sourceFile %q must use forward slashes", sourceFile)
 	}
-
-	commit := strings.TrimSuffix(gitCommit, "+dirty")
-	if len(commit) == 0 {
-		t.Error("gitCommit (without +dirty) must not be empty")
-	}
-	for _, c := range commit {
-		if !((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f')) {
-			t.Errorf("gitCommit %q contains non-hex character %q", commit, string(c))
-			break
-		}
-	}
 }
 
-func Test_ResolveGitContext_returnsGitRepo(t *testing.T) {
-	gitRepo, _, _, err := ResolveGitContext(context.Background(), "compiler.go")
+func Test_ResolveGitContext_noOrigin(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("git not available")
+	}
+	repo := t.TempDir()
+	if out, err := exec.Command("git", "-C", repo, "init", "-q").CombinedOutput(); err != nil {
+		t.Fatalf("git init: %v: %s", err, out)
+	}
+	spec := filepath.Join(repo, "specs", "a.yaml")
+	if err := os.MkdirAll(filepath.Dir(spec), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(spec, []byte("test"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	gitRepo, sourceFile, err := ResolveGitContext(context.Background(), spec)
 	if err != nil {
 		t.Fatalf("ResolveGitContext() error = %v", err)
 	}
-	if gitRepo == "" {
-		t.Error("gitRepo should not be empty")
+	if gitRepo != "" {
+		t.Errorf("gitRepo = %q, want empty when no origin remote is configured", gitRepo)
 	}
-	// When no origin remote is configured (e.g. CI shallow clones), the fallback
-	// is filepath.Base(gitRoot), which is a single segment — skip the shape check.
-	if !strings.Contains(gitRepo, "/") {
-		t.Skipf("gitRepo %q is a bare directory name (no origin remote); skipping org/repo shape check", gitRepo)
-	}
-	parts := strings.Split(gitRepo, "/")
-	if len(parts) != 2 {
-		t.Errorf("gitRepo %q should be in org/repo form", gitRepo)
+	if sourceFile != "specs/a.yaml" {
+		t.Errorf("sourceFile = %q, want specs/a.yaml", sourceFile)
 	}
 }
 
