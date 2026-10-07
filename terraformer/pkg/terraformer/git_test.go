@@ -82,6 +82,41 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 			remoteURL: "ssh://git@gitlab.com:2222/group/subgroup/repo.git",
 			want:      "group/subgroup/repo",
 		},
+		{
+			name:      "https credentials stripped",
+			remoteURL: "https://user:tok@github.com/elastic/harp-plugins.git",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "https token-only userinfo stripped",
+			remoteURL: "https://tok@github.com/elastic/harp-plugins.git",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "https trailing slash",
+			remoteURL: "https://github.com/elastic/harp-plugins/",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "https .git with trailing slash",
+			remoteURL: "https://github.com/elastic/harp-plugins.git/",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "ssh numeric org",
+			remoteURL: "git@github.com:123/repo.git",
+			want:      "123/repo",
+		},
+		{
+			name:      "surrounding whitespace",
+			remoteURL: "  https://github.com/elastic/harp-plugins.git\n",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "empty",
+			remoteURL: "",
+			want:      "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -94,59 +129,159 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 	}
 }
 
-func Test_ResolveGitContext_nonGitPath(t *testing.T) {
-	tmpDir := t.TempDir()
-	fakeSpec := filepath.Join(tmpDir, "spec.yaml")
-	if err := os.WriteFile(fakeSpec, []byte("test"), 0o600); err != nil {
-		t.Fatal(err)
-	}
-
-	_, _, err := ResolveGitContext(context.Background(), fakeSpec)
-	if err == nil {
-		t.Error("expected error for path not in a git repo, got nil")
-	}
-}
-
-func Test_ResolveGitContext_withRealRepo(t *testing.T) {
-	// compiler.go is a stable committed file in this package directory.
-	_, sourceFile, err := ResolveGitContext(context.Background(), "compiler.go")
-	if err != nil {
-		t.Fatalf("ResolveGitContext() error = %v", err)
-	}
-
-	if !strings.HasSuffix(sourceFile, "compiler.go") {
-		t.Errorf("sourceFile %q should end with compiler.go", sourceFile)
-	}
-	if strings.Contains(sourceFile, "\\") {
-		t.Errorf("sourceFile %q must use forward slashes", sourceFile)
-	}
-}
-
-func Test_ResolveGitContext_noOrigin(t *testing.T) {
+// hermeticGit prepares the environment so git behaves identically on every
+// machine: no user or system config, and no ambient repository selection.
+// It skips the test when git is not installed. Tests using it must not run in
+// parallel because they modify process environment.
+func hermeticGit(t *testing.T) {
+	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("git not available")
 	}
-	repo := t.TempDir()
-	if out, err := exec.Command("git", "-C", repo, "init", "-q").CombinedOutput(); err != nil {
-		t.Fatalf("git init: %v: %s", err, out)
+	t.Setenv("GIT_CONFIG_GLOBAL", os.DevNull)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	for _, k := range []string{"GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE"} {
+		t.Setenv(k, "") // registers restore of the original value
+		if err := os.Unsetenv(k); err != nil {
+			t.Fatal(err)
+		}
 	}
-	spec := filepath.Join(repo, "specs", "a.yaml")
+}
+
+func runGit(t *testing.T, dir string, args ...string) {
+	t.Helper()
+	cmd := exec.Command("git", append([]string{"-C", dir}, args...)...)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		t.Fatalf("git %v: %v: %s", args, err, out)
+	}
+}
+
+// newRepo creates an initialized repo containing specs/a.yaml and returns the
+// repo root and the spec path.
+func newRepo(t *testing.T, dir string) (root, spec string) {
+	t.Helper()
+	runGit(t, dir, "init", "-q")
+	spec = filepath.Join(dir, "specs", "a.yaml")
 	if err := os.MkdirAll(filepath.Dir(spec), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	if err := os.WriteFile(spec, []byte("test"), 0o600); err != nil {
 		t.Fatal(err)
 	}
+	return dir, spec
+}
 
-	gitRepo, sourceFile, err := ResolveGitContext(context.Background(), spec)
+func Test_ResolveGitContext_nonGitPath(t *testing.T) {
+	hermeticGit(t)
+	tmpDir := t.TempDir()
+	fakeSpec := filepath.Join(tmpDir, "spec.yaml")
+	if err := os.WriteFile(fakeSpec, []byte("test"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := ResolveGitContext(context.Background(), fakeSpec); err == nil {
+		t.Error("expected error for path not in a git repo, got nil")
+	}
+}
+
+func Test_ResolveGitContext_noOrigin(t *testing.T) {
+	hermeticGit(t)
+	_, spec := newRepo(t, t.TempDir())
+
+	got, err := ResolveGitContext(context.Background(), spec)
 	if err != nil {
 		t.Fatalf("ResolveGitContext() error = %v", err)
 	}
-	if gitRepo != "" {
-		t.Errorf("gitRepo = %q, want empty when no origin remote is configured", gitRepo)
+	if got.GitRepo != "" {
+		t.Errorf("GitRepo = %q, want empty when no origin remote is configured", got.GitRepo)
 	}
-	if sourceFile != "specs/a.yaml" {
-		t.Errorf("sourceFile = %q, want specs/a.yaml", sourceFile)
+	if got.SourceFile != "specs/a.yaml" {
+		t.Errorf("SourceFile = %q, want specs/a.yaml", got.SourceFile)
+	}
+}
+
+func Test_ResolveGitContext_withOrigin(t *testing.T) {
+	hermeticGit(t)
+	root, spec := newRepo(t, t.TempDir())
+	runGit(t, root, "remote", "add", "origin", "https://user:tok@github.com/elastic/harp-plugins.git")
+
+	got, err := ResolveGitContext(context.Background(), spec)
+	if err != nil {
+		t.Fatalf("ResolveGitContext() error = %v", err)
+	}
+	if got.GitRepo != "elastic/harp-plugins" {
+		t.Errorf("GitRepo = %q, want elastic/harp-plugins (credentials must not leak)", got.GitRepo)
+	}
+}
+
+func Test_ResolveGitContext_symlinks(t *testing.T) {
+	hermeticGit(t)
+	root, spec := newRepo(t, t.TempDir())
+
+	linkDir := filepath.Join(t.TempDir(), "link")
+	if err := os.Symlink(root, linkDir); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	linkedSpec := filepath.Join(linkDir, "specs", "a.yaml")
+
+	fileLink := filepath.Join(t.TempDir(), "a-link.yaml")
+	if err := os.Symlink(spec, fileLink); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+
+	tests := []struct {
+		name string
+		path string
+	}{
+		{name: "symlinked directory", path: linkedSpec},
+		{name: "symlinked file", path: fileLink},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := ResolveGitContext(context.Background(), tt.path)
+			if err != nil {
+				t.Fatalf("ResolveGitContext() error = %v", err)
+			}
+			if got.SourceFile != "specs/a.yaml" {
+				t.Errorf("SourceFile = %q, want specs/a.yaml", got.SourceFile)
+			}
+		})
+	}
+}
+
+func Test_ResolveGitContext_relativePath(t *testing.T) {
+	hermeticGit(t)
+	root, _ := newRepo(t, t.TempDir())
+	t.Chdir(filepath.Join(root, "specs"))
+
+	got, err := ResolveGitContext(context.Background(), "a.yaml")
+	if err != nil {
+		t.Fatalf("ResolveGitContext() error = %v", err)
+	}
+	if got.SourceFile != "specs/a.yaml" {
+		t.Errorf("SourceFile = %q, want specs/a.yaml", got.SourceFile)
+	}
+}
+
+func Test_ResolveGitContext_symlinkEscapesRepo(t *testing.T) {
+	hermeticGit(t)
+	root, _ := newRepo(t, t.TempDir())
+
+	outside := filepath.Join(t.TempDir(), "outside.yaml")
+	if err := os.WriteFile(outside, []byte("test"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	escape := filepath.Join(root, "specs", "escape.yaml")
+	if err := os.Symlink(outside, escape); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+
+	got, err := ResolveGitContext(context.Background(), escape)
+	if err == nil {
+		t.Fatalf("expected error for spec resolving outside the git root, got %+v", got)
+	}
+	if !strings.Contains(err.Error(), "outside") && !strings.Contains(err.Error(), "git root") {
+		t.Errorf("error = %v, want mention of path outside git root", err)
 	}
 }
 
@@ -180,6 +315,41 @@ func Test_sanitizeGitString(t *testing.T) {
 			name:  "empty string",
 			input: "",
 			want:  "",
+		},
+		{
+			name:  "double quote removed",
+			input: `a"b`,
+			want:  "ab",
+		},
+		{
+			name:  "backslash removed",
+			input: `a\b`,
+			want:  "ab",
+		},
+		{
+			name:  "tab removed",
+			input: "a\tb",
+			want:  "ab",
+		},
+		{
+			name:  "NUL removed",
+			input: "a\x00b",
+			want:  "ab",
+		},
+		{
+			name:  "ANSI escape introducer removed",
+			input: "a\x1b[31mb",
+			want:  "a[31mb",
+		},
+		{
+			name:  "line and paragraph separators removed",
+			input: "a\u2028b\u2029c",
+			want:  "abc",
+		},
+		{
+			name:  "unicode letters preserved",
+			input: "org/répo-日本",
+			want:  "org/répo-日本",
 		},
 	}
 

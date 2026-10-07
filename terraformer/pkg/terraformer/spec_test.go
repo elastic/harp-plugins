@@ -82,17 +82,62 @@ func Test_Run_sourceInfo_renderedInOutput(t *testing.T) {
 	}
 }
 
-func Test_Run_emptySourceInfo_omitsGitLines(t *testing.T) {
-	var out bytes.Buffer
-	err := Run(context.Background(), strings.NewReader(minimalSpec), "staging", true, "service", ServiceTemplate, SourceInfo{}, &out)
-	if err != nil {
-		t.Fatalf("Run() error = %v", err)
+func Test_Run_allTemplates_headerLayout(t *testing.T) {
+	templates := []struct {
+		name     string
+		template string
+	}{
+		{"service", ServiceTemplate},
+		{"agent", AgentTemplate},
+		{"policy", PolicyTemplate},
 	}
 
-	output := out.String()
-	for _, absent := range []string{"GitRepo", "SourceFile"} {
-		if strings.Contains(output, "# "+absent+":") {
-			t.Errorf("output should not contain %q line when SourceInfo is empty\nfull output:\n%s", absent, output)
+	tests := []struct {
+		name        string
+		src         SourceInfo
+		wantBetween string // text expected between the Description and Issues lines
+	}{
+		{name: "empty omits both lines", src: SourceInfo{}, wantBetween: ""},
+		{
+			name:        "repo only",
+			src:         SourceInfo{GitRepo: "elastic/harp-plugins"},
+			wantBetween: "# GitRepo: \"elastic/harp-plugins\"\n",
+		},
+		{
+			name:        "file only",
+			src:         SourceInfo{SourceFile: "spec.yaml"},
+			wantBetween: "# SourceFile: \"spec.yaml\"\n",
+		},
+		{
+			name:        "repo and file",
+			src:         SourceInfo{GitRepo: "elastic/harp-plugins", SourceFile: "spec.yaml"},
+			wantBetween: "# GitRepo: \"elastic/harp-plugins\"\n# SourceFile: \"spec.yaml\"\n",
+		},
+	}
+
+	for _, tmpl := range templates {
+		for _, tt := range tests {
+			t.Run(tmpl.name+"/"+tt.name, func(t *testing.T) {
+				var out bytes.Buffer
+				err := Run(context.Background(), strings.NewReader(minimalSpec), "staging", true, tmpl.name, tmpl.template, tt.src, &out)
+				if err != nil {
+					t.Fatalf("Run(%s) error = %v", tmpl.name, err)
+				}
+
+				output := out.String()
+				_, afterDesc, ok := strings.Cut(output, "# Description: ")
+				if !ok {
+					t.Fatalf("output missing Description line\nfull output:\n%s", output)
+				}
+				_, afterLine, ok := strings.Cut(afterDesc, "\n")
+				if !ok {
+					t.Fatalf("Description line not newline-terminated\nfull output:\n%s", output)
+				}
+				if !strings.HasPrefix(afterLine, tt.wantBetween+"# Issues:") {
+					t.Errorf("lines after Description = %q, want prefix %q\nfull output:\n%s",
+						afterLine, tt.wantBetween+"# Issues:", output)
+				}
+			})
 		}
 	}
 }
