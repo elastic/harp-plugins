@@ -19,6 +19,7 @@ package cmd
 
 import (
 	"context"
+	"errors"
 
 	"go.uber.org/zap"
 
@@ -26,16 +27,23 @@ import (
 	"github.com/elastic/harp/pkg/sdk/log"
 )
 
+// resolveGitContext is a seam so tests can exercise resolveSourceInfo without git.
+var resolveGitContext = terraformer.ResolveGitContext
+
 // resolveSourceInfo attempts to derive repo and file provenance for specPath.
 // Returns a zero-value SourceInfo when specPath is stdin ("-") or git is unavailable.
 func resolveSourceInfo(ctx context.Context, specPath string) terraformer.SourceInfo {
 	if specPath == "-" {
 		return terraformer.SourceInfo{}
 	}
-	gitRepo, sourceFile, err := terraformer.ResolveGitContext(ctx, specPath)
+	src, err := resolveGitContext(ctx, specPath)
 	if err != nil {
-		log.For(ctx).Warn("source provenance unavailable, header fields omitted", zap.Error(err))
+		msg := "source provenance unavailable, header fields omitted"
+		if errors.Is(err, terraformer.ErrGitNotFound) {
+			msg = "git is not installed, source provenance header fields omitted"
+		}
+		log.For(ctx).Warn(msg, zap.Error(err))
 		return terraformer.SourceInfo{}
 	}
-	return terraformer.SourceInfo{GitRepo: gitRepo, SourceFile: sourceFile}
+	return src
 }

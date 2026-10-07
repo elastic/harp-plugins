@@ -24,18 +24,23 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"unicode"
 )
 
+// ErrGitNotFound is returned when the git binary is not available on PATH.
+var ErrGitNotFound = errors.New("git binary not found in PATH")
+
 // ResolveGitContext resolves source provenance for the given spec file path.
-// It returns the repo name (e.g. "elastic/harp-plugins") and the repo-relative
-// path to the file. The repo name is empty when the repository has no origin
-// remote.
+// The returned SourceInfo carries the repo name (e.g. "elastic/harp-plugins")
+// and the repo-relative path to the file. GitRepo is empty when the repository
+// has no origin remote.
 //
-// Returns an error when the path is not inside a git repository.
-func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFile string, err error) {
+// Returns an error when the path is not inside a git repository, resolves
+// outside of it, or git is not installed (see ErrGitNotFound).
+func ResolveGitContext(ctx context.Context, specPath string) (SourceInfo, error) {
 	absPath, err := filepath.Abs(specPath)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to resolve spec path: %w", err)
+		return SourceInfo{}, fmt.Errorf("unable to resolve spec path: %w", err)
 	}
 
 	// git reports the symlink-resolved root, so resolve the spec path the same
@@ -49,23 +54,29 @@ func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFil
 	// Locate the git root.
 	gitRoot, err := gitOutput(ctx, specDir, "rev-parse", "--show-toplevel")
 	if err != nil {
-		return "", "", fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
+		if errors.Is(err, exec.ErrNotFound) {
+			return SourceInfo{}, fmt.Errorf("%w: %w", ErrGitNotFound, err)
+		}
+		return SourceInfo{}, fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
 	}
 
 	// Compute the repo-relative path, normalised to forward slashes.
 	relPath, err := filepath.Rel(gitRoot, absPath)
 	if err != nil {
-		return "", "", fmt.Errorf("unable to compute relative path: %w", err)
+		return SourceInfo{}, fmt.Errorf("unable to compute relative path: %w", err)
 	}
-	sourceFile = sanitizeGitString(filepath.ToSlash(relPath))
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
+		return SourceInfo{}, fmt.Errorf("spec path %q is outside the git root %q", absPath, gitRoot)
+	}
+	src := SourceInfo{SourceFile: sanitizeGitString(filepath.ToSlash(relPath))}
 
 	// Derive the repo name from the remote URL. Without an origin remote the
 	// name is left empty rather than guessed from the local directory name.
 	if remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin"); remoteErr == nil {
-		gitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
+		src.GitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
 	}
 
-	return gitRepo, sourceFile, nil
+	return src, nil
 }
 
 // parseRepoFromRemoteURL extracts the repository path ("org/repo", or
@@ -73,7 +84,7 @@ func ResolveGitContext(ctx context.Context, specPath string) (gitRepo, sourceFil
 // Supports URL forms (https://host/org/repo.git, ssh://git@host:22/org/repo)
 // and scp-like SSH (git@host:org/repo.git).
 func parseRepoFromRemoteURL(remoteURL string) string {
-	remoteURL = strings.TrimSuffix(strings.TrimSpace(remoteURL), ".git")
+	remoteURL = strings.TrimSuffix(strings.TrimRight(strings.TrimSpace(remoteURL), "/"), ".git")
 
 	// URL form: everything after the host is the repo path.
 	if _, rest, ok := strings.Cut(remoteURL, "://"); ok {
@@ -109,11 +120,15 @@ func gitOutput(ctx context.Context, dir string, args ...string) (string, error) 
 	return strings.TrimSpace(string(out)), nil
 }
 
-// sanitizeGitString removes embedded newline characters from git output before
-// it is embedded in HCL comment lines, preventing comment-injection attacks.
+// sanitizeGitString removes characters from git output that would corrupt the
+// quoted HCL comment values it is embedded in: control characters (including
+// newlines, NUL and ANSI escapes), the Unicode line and paragraph separators,
+// and the quote and backslash characters that would break the surrounding
+// string.
 func sanitizeGitString(s string) string {
 	return strings.Map(func(r rune) rune {
-		if r == '\n' || r == '\r' {
+		switch {
+		case unicode.IsControl(r), r == '\u2028', r == '\u2029', r == '"', r == '\\':
 			return -1
 		}
 		return r
