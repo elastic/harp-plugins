@@ -19,10 +19,10 @@ package terraformer
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"testing"
 )
 
@@ -179,8 +179,12 @@ func Test_ResolveGitContext_nonGitPath(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if _, err := ResolveGitContext(context.Background(), fakeSpec); err == nil {
-		t.Error("expected error for path not in a git repo, got nil")
+	_, err := ResolveGitContext(context.Background(), fakeSpec)
+	if err == nil {
+		t.Fatal("expected error for path not in a git repo, got nil")
+	}
+	if !errors.Is(err, ErrNotGitRepo) {
+		t.Errorf("error = %v, want ErrNotGitRepo", err)
 	}
 }
 
@@ -263,7 +267,7 @@ func Test_ResolveGitContext_relativePath(t *testing.T) {
 	}
 }
 
-func Test_ResolveGitContext_symlinkEscapesRepo(t *testing.T) {
+func Test_ResolveGitContext_symlinkOutsideAnyRepo(t *testing.T) {
 	hermeticGit(t)
 	root, _ := newRepo(t, t.TempDir())
 
@@ -276,12 +280,40 @@ func Test_ResolveGitContext_symlinkEscapesRepo(t *testing.T) {
 		t.Skipf("symlinks unavailable: %v", err)
 	}
 
+	// The target lives outside any repository, so git cannot find a root for it.
 	got, err := ResolveGitContext(context.Background(), escape)
 	if err == nil {
-		t.Fatalf("expected error for spec resolving outside the git root, got %+v", got)
+		t.Fatalf("expected error for spec resolving outside the repo, got %+v", got)
 	}
-	if !strings.Contains(err.Error(), "outside") && !strings.Contains(err.Error(), "git root") {
-		t.Errorf("error = %v, want mention of path outside git root", err)
+	if !errors.Is(err, ErrNotGitRepo) {
+		t.Errorf("error = %v, want ErrNotGitRepo", err)
+	}
+}
+
+func Test_repoRelativePath(t *testing.T) {
+	root := filepath.Join(string(filepath.Separator), "repo")
+	tests := []struct {
+		name    string
+		abs     string
+		want    string
+		wantErr error
+	}{
+		{"inside", filepath.Join(root, "specs", "a.yaml"), "specs/a.yaml", nil},
+		{"at root", filepath.Join(root, "a.yaml"), "a.yaml", nil},
+		{"sibling directory", filepath.Join(string(filepath.Separator), "other", "a.yaml"), "", ErrOutsideGitRoot},
+		{"sibling with shared prefix", filepath.Join(string(filepath.Separator), "repo-other", "a.yaml"), "", ErrOutsideGitRoot},
+		{"parent", filepath.Join(string(filepath.Separator)), "", ErrOutsideGitRoot},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := repoRelativePath(root, tt.abs)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("repoRelativePath() error = %v, want %v", err, tt.wantErr)
+			}
+			if got != tt.want {
+				t.Errorf("repoRelativePath() = %q, want %q", got, tt.want)
+			}
+		})
 	}
 }
 
@@ -360,5 +392,11 @@ func Test_sanitizeGitString(t *testing.T) {
 				t.Errorf("sanitizeGitString(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
+	}
+}
+
+func Test_SanitizeSourceValue(t *testing.T) {
+	if got, want := SanitizeSourceValue("org/repo\n\"x\""), "org/repox"; got != want {
+		t.Errorf("SanitizeSourceValue() = %q, want %q", got, want)
 	}
 }

@@ -32,6 +32,7 @@ var (
 	terraformerServiceInputSpec   string
 	terraformerServiceOutputPath  string
 	terraformerServiceEnvironment string
+	terraformerServiceProvenance  *provenanceFlags
 )
 
 // -----------------------------------------------------------------------------
@@ -47,6 +48,8 @@ var terraformerServiceCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerServiceInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerServiceOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerServiceEnvironment, "env", "production", "Target environment")
+
+	terraformerServiceProvenance = addProvenanceFlags(cmd)
 
 	return cmd
 }
@@ -72,7 +75,10 @@ func runTerraformerService(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerServiceOutputPath))
 	}
 
-	src := resolveSourceInfo(ctx, terraformerServiceInputSpec)
+	src, err := resolveSourceInfo(ctx, terraformerServiceInputSpec, *terraformerServiceProvenance)
+	if err != nil {
+		log.For(ctx).Fatal("source provenance required but unavailable", zap.Error(err), zap.String("path", terraformerServiceInputSpec))
+	}
 
 	// Run terraformer
 	if err := terraformer.Run(ctx, reader, terraformerServiceEnvironment, true, "service", terraformer.ServiceTemplate, src, writer); err != nil {

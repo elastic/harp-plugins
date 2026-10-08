@@ -27,8 +27,15 @@ import (
 	"unicode"
 )
 
-// ErrGitNotFound is returned when the git binary is not available on PATH.
-var ErrGitNotFound = errors.New("git binary not found in PATH")
+var (
+	// ErrGitNotFound is returned when the git binary is not available on PATH.
+	ErrGitNotFound = errors.New("git binary not found in PATH")
+	// ErrNotGitRepo is returned when the spec path is not inside a git repository.
+	ErrNotGitRepo = errors.New("path is not inside a git repository")
+	// ErrOutsideGitRoot is returned when the spec path resolves outside the
+	// git root, for example through a symlink.
+	ErrOutsideGitRoot = errors.New("spec path is outside the git root")
+)
 
 // ResolveGitContext resolves source provenance for the given spec file path.
 // The returned SourceInfo carries the repo name (e.g. "elastic/harp-plugins")
@@ -57,18 +64,15 @@ func ResolveGitContext(ctx context.Context, specPath string) (SourceInfo, error)
 		if errors.Is(err, exec.ErrNotFound) {
 			return SourceInfo{}, fmt.Errorf("%w: %w", ErrGitNotFound, err)
 		}
-		return SourceInfo{}, fmt.Errorf("unable to determine git root (is the path inside a git repo?): %w", err)
+		return SourceInfo{}, fmt.Errorf("%w: %w", ErrNotGitRepo, err)
 	}
 
 	// Compute the repo-relative path, normalised to forward slashes.
-	relPath, err := filepath.Rel(gitRoot, absPath)
+	relPath, err := repoRelativePath(gitRoot, absPath)
 	if err != nil {
-		return SourceInfo{}, fmt.Errorf("unable to compute relative path: %w", err)
+		return SourceInfo{}, err
 	}
-	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
-		return SourceInfo{}, fmt.Errorf("spec path %q is outside the git root %q", absPath, gitRoot)
-	}
-	src := SourceInfo{SourceFile: sanitizeGitString(filepath.ToSlash(relPath))}
+	src := SourceInfo{SourceFile: sanitizeGitString(relPath)}
 
 	// Derive the repo name from the remote URL. Without an origin remote the
 	// name is left empty rather than guessed from the local directory name.
@@ -77,6 +81,19 @@ func ResolveGitContext(ctx context.Context, specPath string) (SourceInfo, error)
 	}
 
 	return src, nil
+}
+
+// repoRelativePath returns absPath relative to gitRoot using forward slashes.
+// It fails with ErrOutsideGitRoot when absPath is not under gitRoot.
+func repoRelativePath(gitRoot, absPath string) (string, error) {
+	relPath, err := filepath.Rel(gitRoot, absPath)
+	if err != nil {
+		return "", fmt.Errorf("unable to compute relative path: %w", err)
+	}
+	if relPath == ".." || strings.HasPrefix(relPath, ".."+string(filepath.Separator)) {
+		return "", fmt.Errorf("%w: %q is not under %q", ErrOutsideGitRoot, absPath, gitRoot)
+	}
+	return filepath.ToSlash(relPath), nil
 }
 
 // parseRepoFromRemoteURL extracts the repository path ("org/repo", or
@@ -118,6 +135,12 @@ func gitOutput(ctx context.Context, dir string, args ...string) (string, error) 
 		return "", fmt.Errorf("git %s: %w", args[0], err)
 	}
 	return strings.TrimSpace(string(out)), nil
+}
+
+// SanitizeSourceValue makes a caller-supplied provenance value safe to embed
+// in the generated header, using the same rules as values read from git.
+func SanitizeSourceValue(s string) string {
+	return sanitizeGitString(s)
 }
 
 // sanitizeGitString removes characters from git output that would corrupt the

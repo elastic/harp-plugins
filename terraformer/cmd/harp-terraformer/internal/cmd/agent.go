@@ -33,6 +33,7 @@ var (
 	terraformerAgentOutputPath       string
 	terraformerAgentDisableTokenWrap bool
 	terraformerAgentEnvironment      string
+	terraformerAgentProvenance       *provenanceFlags
 )
 
 // -----------------------------------------------------------------------------
@@ -49,6 +50,8 @@ var terraformerAgentCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerAgentOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerAgentEnvironment, "env", "production", "Target environment")
 	cmd.Flags().BoolVar(&terraformerAgentDisableTokenWrap, "no-token-wrap", false, "Disable token wrapping")
+
+	terraformerAgentProvenance = addProvenanceFlags(cmd)
 
 	return cmd
 }
@@ -74,7 +77,10 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerAgentOutputPath))
 	}
 
-	src := resolveSourceInfo(ctx, terraformerAgentInputSpec)
+	src, err := resolveSourceInfo(ctx, terraformerAgentInputSpec, *terraformerAgentProvenance)
+	if err != nil {
+		log.For(ctx).Fatal("source provenance required but unavailable", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
+	}
 
 	// Run terraformer
 	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, src, writer); err != nil {

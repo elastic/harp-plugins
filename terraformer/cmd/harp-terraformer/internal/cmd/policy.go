@@ -32,6 +32,7 @@ var (
 	terraformerPolicyInputSpec   string
 	terraformerPolicyOutputPath  string
 	terraformerPolicyEnvironment string
+	terraformerPolicyProvenance  *provenanceFlags
 )
 
 // -----------------------------------------------------------------------------
@@ -47,6 +48,8 @@ var terraformerPolicyCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerPolicyInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerPolicyOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerPolicyEnvironment, "env", "production", "Target environment")
+
+	terraformerPolicyProvenance = addProvenanceFlags(cmd)
 
 	return cmd
 }
@@ -72,7 +75,10 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
 	}
 
-	src := resolveSourceInfo(ctx, terraformerPolicyInputSpec)
+	src, err := resolveSourceInfo(ctx, terraformerPolicyInputSpec, *terraformerPolicyProvenance)
+	if err != nil {
+		log.For(ctx).Fatal("source provenance required but unavailable", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
+	}
 
 	// Run terraformer (policy template doesn't use auth engine)
 	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, src, writer); err != nil {
