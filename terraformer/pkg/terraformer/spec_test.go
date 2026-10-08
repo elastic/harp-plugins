@@ -20,6 +20,9 @@ package terraformer
 import (
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"strings"
 	"testing"
 )
@@ -197,5 +200,58 @@ func Test_Run_invalidYAML_returnsError(t *testing.T) {
 	err := Run(context.Background(), strings.NewReader("not: valid: yaml: spec"), "staging", true, "service", ServiceTemplate, SourceInfo{}, &out)
 	if err == nil {
 		t.Error("expected error for invalid YAML, got nil")
+	}
+}
+
+func Test_sourceSHA256(t *testing.T) {
+	tests := []struct {
+		name  string
+		input []byte
+		want  string
+	}{
+		{"empty", nil, "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"},
+		{"simple", []byte("abc"), "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad"},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := sourceSHA256(tt.input); got != tt.want {
+				t.Errorf("sourceSHA256(%q) = %s, want %s", tt.input, got, tt.want)
+			}
+		})
+	}
+
+	if sourceSHA256([]byte("a\r\nb")) == sourceSHA256([]byte("a\nb")) {
+		t.Error("CRLF and LF inputs must hash differently: the hash covers the raw bytes")
+	}
+}
+
+func Test_Run_allTemplates_sourceSHA256(t *testing.T) {
+	sum := sha256.Sum256([]byte(minimalSpec))
+	want := fmt.Sprintf("# SourceSHA256: %q\n", hex.EncodeToString(sum[:]))
+
+	for _, tmpl := range []struct{ name, template string }{
+		{"service", ServiceTemplate},
+		{"agent", AgentTemplate},
+		{"policy", PolicyTemplate},
+	} {
+		t.Run(tmpl.name, func(t *testing.T) {
+			// The hash is computed from the bytes, so it is present even with no
+			// git provenance (stdin) and independent of any caller-supplied value.
+			var out bytes.Buffer
+			err := Run(context.Background(), strings.NewReader(minimalSpec), "staging", true, tmpl.name, tmpl.template, SourceInfo{}, &out)
+			if err != nil {
+				t.Fatalf("Run(%s) error = %v", tmpl.name, err)
+			}
+			output := out.String()
+			if !strings.Contains(output, want) {
+				t.Fatalf("output missing %q\nfull output:\n%s", want, output)
+			}
+			// Placed directly after SpecificationHash.
+			_, afterSpecHash, _ := strings.Cut(output, "# SpecificationHash: ")
+			_, next, _ := strings.Cut(afterSpecHash, "\n")
+			if !strings.HasPrefix(next, want) {
+				t.Errorf("SourceSHA256 should follow SpecificationHash, got %q", next)
+			}
+		})
 	}
 }

@@ -22,6 +22,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
 	"io"
 	"text/template"
@@ -40,6 +41,16 @@ import (
 type SourceInfo struct {
 	GitRepo    string
 	SourceFile string
+	// SourceSHA256 is the hex sha256 of the raw specification bytes. Run
+	// always computes it from its input, overriding any caller-supplied value.
+	SourceSHA256 string
+}
+
+// sourceSHA256 returns the hex encoded sha256 of the raw specification bytes,
+// so it can be verified against the file with sha256sum.
+func sourceSHA256(raw []byte) string {
+	sum := sha256.Sum256(raw)
+	return hex.EncodeToString(sum[:])
 }
 
 // Run the template generation
@@ -49,6 +60,10 @@ func Run(_ context.Context, reader io.Reader, environmentParam string, noTokenWr
 	if err != nil {
 		return fmt.Errorf("unable to read input specification: %w", err)
 	}
+
+	// Hash the raw bytes so the output can be tied back to the exact input,
+	// including when it arrives on stdin and no git context exists.
+	src.SourceSHA256 = sourceSHA256(specificationRaw)
 
 	// Load YAML to Protobuf
 	def, err := loadFromYAML(specificationRaw)

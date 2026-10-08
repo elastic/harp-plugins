@@ -24,6 +24,7 @@ const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
@@ -81,6 +82,7 @@ const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
@@ -136,6 +138,7 @@ const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
 # Description: "{{.Meta.Description}}"{{if .GitRepo}}
@@ -177,8 +180,13 @@ resource "vault_policy" "policy-{{.ObjectName}}" {
 // -----------------------------------------------------------------------------
 
 type tmplModel struct {
-	// SpecHash contains base64 encoded sha256 hash of input specification.
+	// SpecHash contains the base64 encoded sha256 hash of the parsed (protobuf
+	// serialized) specification. It cannot be verified against the YAML file;
+	// use SourceSHA256 for that.
 	SpecHash string
+	// SourceSHA256 contains the hex encoded sha256 hash of the raw input
+	// specification bytes, verifiable with sha256sum.
+	SourceSHA256 string
 	// Meta contains specification metadata
 	Meta *terraformerv1.AppRoleDefinitionMeta
 	// Date contains the generation data as RFC822 string.
