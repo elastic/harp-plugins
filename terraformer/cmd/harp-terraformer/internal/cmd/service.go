@@ -69,15 +69,14 @@ func runTerraformerService(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to open input specification", zap.Error(err), zap.String("path", terraformerServiceInputSpec))
 	}
 
+	// Resolve provenance before the output is opened, so a failure cannot
+	// truncate an existing file.
+	src := mustResolveSourceInfo(ctx, terraformerServiceInputSpec, *terraformerServiceProvenance)
+
 	// Create output writer
 	writer, err := cmdutil.Writer(terraformerServiceOutputPath)
 	if err != nil {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerServiceOutputPath))
-	}
-
-	src, err := resolveSourceInfo(ctx, terraformerServiceInputSpec, *terraformerServiceProvenance)
-	if err != nil {
-		log.For(ctx).Fatal("source provenance required but unavailable", zap.Error(err), zap.String("path", terraformerServiceInputSpec))
 	}
 
 	// Run terraformer

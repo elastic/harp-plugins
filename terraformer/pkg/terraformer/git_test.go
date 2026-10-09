@@ -117,6 +117,31 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 			remoteURL: "",
 			want:      "",
 		},
+		{
+			name:      "https credentials without a path yield nothing",
+			remoteURL: "https://user:tok@github.com",
+			want:      "",
+		},
+		{
+			name:      "local absolute path yields nothing",
+			remoteURL: "/srv/git/repo.git",
+			want:      "",
+		},
+		{
+			name:      "file url yields nothing",
+			remoteURL: "file:///srv/git/repo.git",
+			want:      "",
+		},
+		{
+			name:      "scp-like with embedded credentials",
+			remoteURL: "user:pw@github.com:elastic/harp-plugins.git",
+			want:      "elastic/harp-plugins",
+		},
+		{
+			name:      "scp-like without user",
+			remoteURL: "github.com:elastic/harp-plugins.git",
+			want:      "elastic/harp-plugins",
+		},
 	}
 
 	for _, tt := range tests {
@@ -317,7 +342,7 @@ func Test_repoRelativePath(t *testing.T) {
 	}
 }
 
-func Test_sanitizeGitString(t *testing.T) {
+func Test_SanitizeSourceValue(t *testing.T) {
 	tests := []struct {
 		name  string
 		input string
@@ -387,16 +412,33 @@ func Test_sanitizeGitString(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := sanitizeGitString(tt.input)
+			got := SanitizeSourceValue(tt.input)
 			if got != tt.want {
-				t.Errorf("sanitizeGitString(%q) = %q, want %q", tt.input, got, tt.want)
+				t.Errorf("SanitizeSourceValue(%q) = %q, want %q", tt.input, got, tt.want)
 			}
 		})
 	}
 }
 
-func Test_SanitizeSourceValue(t *testing.T) {
-	if got, want := SanitizeSourceValue("org/repo\n\"x\""), "org/repox"; got != want {
-		t.Errorf("SanitizeSourceValue() = %q, want %q", got, want)
+func Test_gitEnv(t *testing.T) {
+	got := gitEnv([]string{"PATH=/bin", "GIT_DIR=/x", "GIT_WORK_TREE=/y", "GIT_INDEX_FILE=/z", "LC_ALL=fr_FR", "HOME=/h"})
+	want := []string{"PATH=/bin", "HOME=/h", "GIT_TERMINAL_PROMPT=0", "LC_ALL=C"}
+	if len(got) != len(want) {
+		t.Fatalf("gitEnv() = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("gitEnv() = %v, want %v", got, want)
+		}
+	}
+}
+
+func Test_ResolveGitContext_cancelledContext(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+
+	_, err := ResolveGitContext(ctx, filepath.Join(t.TempDir(), "spec.yaml"))
+	if !errors.Is(err, context.Canceled) {
+		t.Fatalf("ResolveGitContext() error = %v, want context.Canceled", err)
 	}
 }

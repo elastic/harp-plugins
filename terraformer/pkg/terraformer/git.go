@@ -21,6 +21,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"net/url"
+	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
@@ -52,6 +54,9 @@ func ResolveGitContext(ctx context.Context, specPath string) (SourceInfo, error)
 
 	// git reports the symlink-resolved root, so resolve the spec path the same
 	// way to keep the repo-relative path correct (e.g. /var -> /private/var).
+	// A symlink to another file in the repo therefore records the target path,
+	// not the path the caller passed. Resolution errors (e.g. a path that does
+	// not exist) are ignored; git then reports the failure itself.
 	if resolved, evalErr := filepath.EvalSymlinks(absPath); evalErr == nil {
 		absPath = resolved
 	}
@@ -61,23 +66,34 @@ func ResolveGitContext(ctx context.Context, specPath string) (SourceInfo, error)
 	// Locate the git root.
 	gitRoot, err := gitOutput(ctx, specDir, "rev-parse", "--show-toplevel")
 	if err != nil {
+		if ctxErr := ctx.Err(); ctxErr != nil {
+			return SourceInfo{}, fmt.Errorf("resolve git context: %w", ctxErr)
+		}
 		if errors.Is(err, exec.ErrNotFound) {
 			return SourceInfo{}, fmt.Errorf("%w: %w", ErrGitNotFound, err)
 		}
 		return SourceInfo{}, fmt.Errorf("%w: %w", ErrNotGitRepo, err)
 	}
 
+	// git prints forward slashes on every platform.
+	gitRoot = filepath.FromSlash(gitRoot)
+
 	// Compute the repo-relative path, normalised to forward slashes.
 	relPath, err := repoRelativePath(gitRoot, absPath)
 	if err != nil {
 		return SourceInfo{}, err
 	}
-	src := SourceInfo{SourceFile: sanitizeGitString(relPath)}
+	src := SourceInfo{SourceFile: SanitizeSourceValue(relPath)}
 
 	// Derive the repo name from the remote URL. Without an origin remote the
-	// name is left empty rather than guessed from the local directory name.
-	if remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin"); remoteErr == nil {
-		src.GitRepo = sanitizeGitString(parseRepoFromRemoteURL(remoteOut))
+	// name is left empty rather than guessed from the local directory name, so
+	// a failing "remote get-url" is expected and only cancellation is reported.
+	remoteOut, remoteErr := gitOutput(ctx, specDir, "remote", "get-url", "origin")
+	if ctxErr := ctx.Err(); ctxErr != nil {
+		return SourceInfo{}, fmt.Errorf("resolve git context: %w", ctxErr)
+	}
+	if remoteErr == nil {
+		src.GitRepo = SanitizeSourceValue(parseRepoFromRemoteURL(remoteOut))
 	}
 
 	return src, nil
@@ -99,33 +115,48 @@ func repoRelativePath(gitRoot, absPath string) (string, error) {
 // parseRepoFromRemoteURL extracts the repository path ("org/repo", or
 // "group/subgroup/repo" for nested namespaces) from a git remote URL.
 // Supports URL forms (https://host/org/repo.git, ssh://git@host:22/org/repo)
-// and scp-like SSH (git@host:org/repo.git).
+// and scp-like SSH (git@host:org/repo.git). Credentials are never part of the
+// result. It returns "" when no repository path can be extracted, including
+// for local paths and file:// URLs, which would otherwise leak the local
+// filesystem layout.
 func parseRepoFromRemoteURL(remoteURL string) string {
 	remoteURL = strings.TrimSuffix(strings.TrimRight(strings.TrimSpace(remoteURL), "/"), ".git")
 
 	// URL form: everything after the host is the repo path.
-	if _, rest, ok := strings.Cut(remoteURL, "://"); ok {
-		if _, path, found := strings.Cut(rest, "/"); found {
-			return strings.Trim(path, "/")
+	if strings.Contains(remoteURL, "://") {
+		u, err := url.Parse(remoteURL)
+		if err != nil || u.Scheme == "file" {
+			return ""
 		}
-		return remoteURL
+		return strings.Trim(u.Path, "/")
 	}
 
-	// scp-like form: host:path
+	// scp-like form: [user@]host:path. Drop any user info, which may carry
+	// credentials, before splitting host from path.
+	head, _, _ := strings.Cut(remoteURL, "/")
+	if at := strings.LastIndex(head, "@"); at >= 0 {
+		remoteURL = remoteURL[at+1:]
+	}
 	if _, path, ok := strings.Cut(remoteURL, ":"); ok {
 		return strings.Trim(path, "/")
 	}
 
-	return remoteURL
+	// No scheme and no host separator: a local path.
+	return ""
 }
 
 // gitOutput runs a git command inside dir and returns trimmed stdout.
 // When the command fails, stderr from git is included in the returned error.
 func gitOutput(ctx context.Context, dir string, args ...string) (string, error) {
 	if len(args) == 0 {
-		return "", fmt.Errorf("gitOutput: at least one git argument required")
+		return "", errors.New("gitOutput: at least one git argument required")
 	}
-	cmd := exec.CommandContext(ctx, "git", append([]string{"-C", dir}, args...)...)
+	// The spec may live in an untrusted checkout, so disable the config hooks
+	// that execute programs. args are fixed by the callers and dir is only ever
+	// the value of -C, so there is no argument injection.
+	full := append([]string{"-c", "core.fsmonitor=false", "-C", dir}, args...)
+	cmd := exec.CommandContext(ctx, "git", full...) //nolint:gosec // fixed arguments, no shell
+	cmd.Env = gitEnv(os.Environ())
 	out, err := cmd.Output()
 	if err != nil {
 		var exitErr *exec.ExitError
@@ -137,18 +168,28 @@ func gitOutput(ctx context.Context, dir string, args ...string) (string, error) 
 	return strings.TrimSpace(string(out)), nil
 }
 
-// SanitizeSourceValue makes a caller-supplied provenance value safe to embed
-// in the generated header, using the same rules as values read from git.
-func SanitizeSourceValue(s string) string {
-	return sanitizeGitString(s)
+// gitEnv returns env without the variables that redirect git to a different
+// repository than the one containing the spec, and with prompts and locale
+// pinned so that git behaves the same everywhere.
+func gitEnv(env []string) []string {
+	out := make([]string, 0, len(env)+2)
+	for _, kv := range env {
+		switch name, _, _ := strings.Cut(kv, "="); name {
+		case "GIT_DIR", "GIT_WORK_TREE", "GIT_INDEX_FILE", "GIT_TERMINAL_PROMPT", "LC_ALL":
+			continue
+		}
+		out = append(out, kv)
+	}
+	return append(out, "GIT_TERMINAL_PROMPT=0", "LC_ALL=C")
 }
 
-// sanitizeGitString removes characters from git output that would corrupt the
-// quoted HCL comment values it is embedded in: control characters (including
-// newlines, NUL and ANSI escapes), the Unicode line and paragraph separators,
-// and the quote and backslash characters that would break the surrounding
-// string.
-func sanitizeGitString(s string) string {
+// SanitizeSourceValue makes a provenance value, whether read from git or
+// supplied by the caller, safe to embed in the generated header. It removes
+// characters that would corrupt the quoted HCL comment values: control
+// characters (including newlines, NUL and ANSI escapes), the Unicode line and
+// paragraph separators, and the quote and backslash characters that would break
+// the surrounding string.
+func SanitizeSourceValue(s string) string {
 	return strings.Map(func(r rune) rune {
 		switch {
 		case unicode.IsControl(r), r == '\u2028', r == '\u2029', r == '"', r == '\\':

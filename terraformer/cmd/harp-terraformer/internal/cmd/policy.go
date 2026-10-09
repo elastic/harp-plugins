@@ -69,15 +69,14 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to open input specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 
+	// Resolve provenance before the output is opened, so a failure cannot
+	// truncate an existing file.
+	src := mustResolveSourceInfo(ctx, terraformerPolicyInputSpec, *terraformerPolicyProvenance)
+
 	// Create output writer
 	writer, err := cmdutil.Writer(terraformerPolicyOutputPath)
 	if err != nil {
 		log.For(ctx).Fatal("unable to create output writer", zap.Error(err), zap.String("path", terraformerPolicyOutputPath))
-	}
-
-	src, err := resolveSourceInfo(ctx, terraformerPolicyInputSpec, *terraformerPolicyProvenance)
-	if err != nil {
-		log.For(ctx).Fatal("source provenance required but unavailable", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 
 	// Run terraformer (policy template doesn't use auth engine)

@@ -58,10 +58,16 @@ func Test_resolveSourceInfo(t *testing.T) {
 			want:     terraformer.SourceInfo{GitRepo: "elastic/harp-plugins", SourceFile: "specs/a.yaml"},
 		},
 		{
-			name:     "overrides are sanitized",
+			name:     "repo override with unsupported characters is rejected",
 			specPath: "-",
-			flags:    provenanceFlags{sourceRepo: "elastic/\"repo\"\ninjected", sourceFile: "a\r\n.yaml"},
-			want:     terraformer.SourceInfo{GitRepo: "elastic/repoinjected", SourceFile: "a.yaml"},
+			flags:    provenanceFlags{sourceRepo: "elastic/\"repo\"\ninjected"},
+			wantErr:  errInvalidOverride,
+		},
+		{
+			name:     "file override with unsupported characters is rejected",
+			specPath: "-",
+			flags:    provenanceFlags{sourceFile: "a\r\n.yaml"},
+			wantErr:  errInvalidOverride,
 		},
 		{
 			name:     "stdin with repo override only leaves file empty",
