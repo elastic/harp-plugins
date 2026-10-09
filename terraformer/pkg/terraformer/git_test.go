@@ -142,6 +142,31 @@ func Test_parseRepoFromRemoteURL(t *testing.T) {
 			remoteURL: "github.com:elastic/harp-plugins.git",
 			want:      "elastic/harp-plugins",
 		},
+		{
+			name:      "scp-like nested namespace",
+			remoteURL: "git@gitlab.com:group/sub/repo.git",
+			want:      "group/sub/repo",
+		},
+		{
+			name:      "local absolute path with colon yields nothing",
+			remoteURL: "/tmp/a:b/repo",
+			want:      "",
+		},
+		{
+			name:      "local relative path with colon yields nothing",
+			remoteURL: "./rel:dir/repo",
+			want:      "",
+		},
+		{
+			name:      "windows drive path with forward slashes yields nothing",
+			remoteURL: "C:/work/repo",
+			want:      "",
+		},
+		{
+			name:      "windows drive path with backslashes yields nothing",
+			remoteURL: `C:\work\repo`,
+			want:      "",
+		},
 	}
 
 	for _, tt := range tests {
@@ -402,6 +427,21 @@ func Test_SanitizeSourceValue(t *testing.T) {
 			name:  "line and paragraph separators removed",
 			input: "a\u2028b\u2029c",
 			want:  "abc",
+		},
+		{
+			name:  "bidi override removed",
+			input: "a‮b",
+			want:  "ab",
+		},
+		{
+			name:  "bidi isolate removed",
+			input: "a⁦b⁩c",
+			want:  "abc",
+		},
+		{
+			name:  "zero-width space removed",
+			input: "a​b",
+			want:  "ab",
 		},
 		{
 			name:  "unicode letters preserved",

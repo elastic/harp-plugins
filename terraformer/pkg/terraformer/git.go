@@ -137,12 +137,14 @@ func parseRepoFromRemoteURL(remoteURL string) string {
 	if at := strings.LastIndex(head, "@"); at >= 0 {
 		remoteURL = remoteURL[at+1:]
 	}
-	if _, path, ok := strings.Cut(remoteURL, ":"); ok {
-		return strings.Trim(path, "/")
+	host, path, ok := strings.Cut(remoteURL, ":")
+	// A host never contains a path separator, and a single letter is a Windows
+	// drive ("C:/work/repo"). Anything else is a local path that happens to
+	// contain a colon, which must not be reported as a repository.
+	if !ok || len(host) < 2 || strings.ContainsAny(host, `/\`) {
+		return ""
 	}
-
-	// No scheme and no host separator: a local path.
-	return ""
+	return strings.Trim(path, "/")
 }
 
 // gitOutput runs a git command inside dir and returns trimmed stdout.
@@ -187,12 +189,13 @@ func gitEnv(env []string) []string {
 // supplied by the caller, safe to embed in the generated header. It removes
 // characters that would corrupt the quoted HCL comment values: control
 // characters (including newlines, NUL and ANSI escapes), the Unicode line and
-// paragraph separators, and the quote and backslash characters that would break
-// the surrounding string.
+// paragraph separators, the quote and backslash characters that would break
+// the surrounding string, and format characters (bidi overrides, zero-width
+// characters) that would make the value render differently from its content.
 func SanitizeSourceValue(s string) string {
 	return strings.Map(func(r rune) rune {
 		switch {
-		case unicode.IsControl(r), r == '\u2028', r == '\u2029', r == '"', r == '\\':
+		case unicode.IsControl(r), unicode.Is(unicode.Cf, r), r == '\u2028', r == '\u2029', r == '"', r == '\\':
 			return -1
 		}
 		return r
