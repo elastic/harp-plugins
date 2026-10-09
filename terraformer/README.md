@@ -215,3 +215,50 @@ resource "vault_approle_auth_backend_role" "harp-aws-deployer-production" {
   ]
 }
 ```
+
+## Provenance
+
+Each generated file starts with a header that ties it back to its input.
+
+| Header line | Meaning |
+|---|---|
+| `SpecificationHash` | base64 sha256 of the parsed specification (its protobuf serialization). It cannot be recomputed from the YAML file. |
+| `SourceSHA256` | hex sha256 of the raw specification bytes. Always present, including for stdin. |
+| `GitRepo` | Repository name, for example `elastic/harp-plugins`. Omitted when unknown. |
+| `SourceFile` | Repo-relative path of the specification. Omitted when unknown. |
+
+Check the specification against `SourceSHA256` with `sha256sum`:
+
+```sh
+sha256sum request.yaml
+```
+
+The hash covers the bytes that `harp-terraformer` reads. If you pipe the
+specification through another tool, such as `harp template`, hash that tool's
+output instead of the original file.
+
+`GitRepo` and `SourceFile` are read from git when `--spec` is a file inside a
+repository. The repository name comes from the `origin` remote, with any
+credentials removed. When the specification comes from stdin, or git is not
+available, they are omitted and a warning is logged where git is the cause.
+
+Set them explicitly with flags, which take priority over git for each field:
+
+```sh
+gh api repos/elastic/example/contents/specs/a.yaml --jq .content | base64 -d \
+  | harp-terraformer service --spec - \
+      --source-repo elastic/example --source-file specs/a.yaml
+```
+
+The values are recorded as given, so they are only as trustworthy as the caller.
+
+To fail instead of omitting the fields, for example in CI, add
+`--require-provenance`. The command exits with an error that names the reason:
+the specification is read from stdin, git is not installed, the path is not in a
+git repository, or the repo or file is still unknown.
+
+| Flag | Applies to | Default |
+|---|---|---|
+| `--source-repo` | `service`, `agent`, `policy` | none |
+| `--source-file` | `service`, `agent`, `policy` | none |
+| `--require-provenance` | `service`, `agent`, `policy` | off |

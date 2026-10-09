@@ -33,6 +33,7 @@ var (
 	terraformerAgentOutputPath       string
 	terraformerAgentDisableTokenWrap bool
 	terraformerAgentEnvironment      string
+	terraformerAgentProvenance       *provenanceFlags
 )
 
 // -----------------------------------------------------------------------------
@@ -49,6 +50,8 @@ var terraformerAgentCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerAgentOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerAgentEnvironment, "env", "production", "Target environment")
 	cmd.Flags().BoolVar(&terraformerAgentDisableTokenWrap, "no-token-wrap", false, "Disable token wrapping")
+
+	terraformerAgentProvenance = addProvenanceFlags(cmd)
 
 	return cmd
 }
@@ -68,6 +71,10 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to open input specification", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
 	}
 
+	// Resolve provenance before the output is opened, so a failure cannot
+	// truncate an existing file.
+	src := mustResolveSourceInfo(ctx, terraformerAgentInputSpec, *terraformerAgentProvenance)
+
 	// Create output writer
 	writer, err := cmdutil.Writer(terraformerAgentOutputPath)
 	if err != nil {
@@ -75,7 +82,7 @@ func runTerraformerAgent(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer
-	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerAgentEnvironment, terraformerAgentDisableTokenWrap, "agent", terraformer.AgentTemplate, src, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerAgentInputSpec))
 	}
 }

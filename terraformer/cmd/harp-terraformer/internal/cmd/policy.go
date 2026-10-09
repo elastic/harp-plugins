@@ -32,6 +32,7 @@ var (
 	terraformerPolicyInputSpec   string
 	terraformerPolicyOutputPath  string
 	terraformerPolicyEnvironment string
+	terraformerPolicyProvenance  *provenanceFlags
 )
 
 // -----------------------------------------------------------------------------
@@ -47,6 +48,8 @@ var terraformerPolicyCmd = func() *cobra.Command {
 	cmd.Flags().StringVar(&terraformerPolicyInputSpec, "spec", "-", "AppRole specification path ('-' for stdin or filename)")
 	cmd.Flags().StringVar(&terraformerPolicyOutputPath, "out", "-", "Output file ('-' for stdout or a filename)")
 	cmd.Flags().StringVar(&terraformerPolicyEnvironment, "env", "production", "Target environment")
+
+	terraformerPolicyProvenance = addProvenanceFlags(cmd)
 
 	return cmd
 }
@@ -66,6 +69,10 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 		log.For(ctx).Fatal("unable to open input specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 
+	// Resolve provenance before the output is opened, so a failure cannot
+	// truncate an existing file.
+	src := mustResolveSourceInfo(ctx, terraformerPolicyInputSpec, *terraformerPolicyProvenance)
+
 	// Create output writer
 	writer, err := cmdutil.Writer(terraformerPolicyOutputPath)
 	if err != nil {
@@ -73,7 +80,7 @@ func runTerraformerPolicy(cmd *cobra.Command, _ []string) {
 	}
 
 	// Run terraformer (policy template doesn't use auth engine)
-	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, writer); err != nil {
+	if err := terraformer.Run(ctx, reader, terraformerPolicyEnvironment, true, "", terraformer.PolicyTemplate, src, writer); err != nil {
 		log.For(ctx).Fatal("unable to process specification", zap.Error(err), zap.String("path", terraformerPolicyInputSpec))
 	}
 }
