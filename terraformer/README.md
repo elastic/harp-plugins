@@ -239,7 +239,10 @@ output instead of the original file.
 
 `GitRepo` and `SourceFile` are read from git when `--spec` is a file inside a
 repository. The repository name comes from the `origin` remote, with any
-credentials removed. When the specification comes from stdin, or git is not
+credentials removed, so a clone of a fork records the fork (`<user>/<repo>`)
+rather than the upstream. Use `--source-repo` to record a different name.
+`GitRepo` has the shape `org/repo` (nested groups such as `group/subgroup/repo`
+are kept) and `SourceFile` is the path relative to the repository root. When the specification comes from stdin, or git is not
 available, they are omitted and a warning is logged where git is the cause.
 
 Set them explicitly with flags, which take priority over git for each field:
@@ -251,6 +254,8 @@ gh api repos/elastic/example/contents/specs/a.yaml --jq .content | base64 -d \
 ```
 
 The values are recorded as given, so they are only as trustworthy as the caller.
+Empty-looking values (whitespace only) and values with control or quote
+characters are rejected.
 
 To fail instead of omitting the fields, for example in CI, add
 `--require-provenance`. The command exits with an error that names the reason:

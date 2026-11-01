@@ -57,8 +57,8 @@ type provenanceFlags struct {
 // subcommands expose the same options.
 func addProvenanceFlags(cmd *cobra.Command) *provenanceFlags {
 	f := &provenanceFlags{}
-	cmd.Flags().StringVar(&f.sourceRepo, "source-repo", "", "Repository name recorded in the header, overriding git discovery (e.g. 'elastic/harp-plugins')")
-	cmd.Flags().StringVar(&f.sourceFile, "source-file", "", "Repo-relative specification path recorded in the header, overriding git discovery")
+	cmd.Flags().StringVar(&f.sourceRepo, "source-repo", "", "Repository name recorded in the header as 'org/repo', overriding git discovery (default: the 'origin' remote)")
+	cmd.Flags().StringVar(&f.sourceFile, "source-file", "", "Repo-relative specification path recorded in the header (e.g. 'specs/a.yaml'), overriding git discovery")
 	cmd.Flags().BoolVar(&f.required, "require-provenance", false, "Fail when the repo and file cannot be determined")
 	return f
 }
@@ -75,10 +75,11 @@ func mustResolveSourceInfo(ctx context.Context, specPath string, flags provenanc
 }
 
 // sanitizeOverride returns v sanitized, or errInvalidOverride when sanitizing
-// would change it, so a value is never altered silently.
+// would change it or v is whitespace-only, so a value is never altered silently
+// and a blank value cannot satisfy --require-provenance.
 func sanitizeOverride(flag, v string) (string, error) {
 	clean := terraformer.SanitizeSourceValue(v)
-	if clean != v {
+	if clean != v || (v != "" && strings.TrimSpace(v) == "") {
 		return "", fmt.Errorf("%w: --%s=%q", errInvalidOverride, flag, v)
 	}
 	return clean, nil

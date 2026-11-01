@@ -41,8 +41,9 @@ var (
 
 // ResolveGitContext resolves source provenance for the given spec file path.
 // The returned SourceInfo carries the repo name (e.g. "elastic/harp-plugins")
-// and the repo-relative path to the file. GitRepo is empty when the repository
-// has no origin remote.
+// and the repo-relative path to the file. GitRepo reflects the origin remote,
+// so a fork clone records the fork; it is empty when the repository has no
+// origin remote.
 //
 // Returns an error when the path is not inside a git repository, resolves
 // outside of it, or git is not installed (see ErrGitNotFound).

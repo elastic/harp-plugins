@@ -70,6 +70,18 @@ func Test_resolveSourceInfo(t *testing.T) {
 			wantErr:  errInvalidOverride,
 		},
 		{
+			name:     "whitespace-only repo override is rejected",
+			specPath: "-",
+			flags:    provenanceFlags{sourceRepo: " ", required: true},
+			wantErr:  errInvalidOverride,
+		},
+		{
+			name:     "whitespace-only file override is rejected",
+			specPath: "-",
+			flags:    provenanceFlags{sourceFile: "\t ", required: true},
+			wantErr:  errInvalidOverride,
+		},
+		{
 			name:     "stdin with repo override only leaves file empty",
 			specPath: "-",
 			flags:    provenanceFlags{sourceRepo: "elastic/harp-plugins"},
