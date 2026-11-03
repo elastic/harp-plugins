@@ -162,7 +162,7 @@ func Test_compile(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName)
+			_, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName, SourceInfo{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -254,7 +254,7 @@ func Test_compile_template_object(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			res, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName)
+			res, err := compile(tt.args.env, tt.args.def, tt.args.specHash, tt.args.noTokenWrap, tt.args.defaultAuthEngineName, SourceInfo{})
 			if (err != nil) != tt.wantErr {
 				t.Errorf("compile() error = %v, wantErr %v", err, tt.wantErr)
 				return
@@ -319,7 +319,7 @@ func Test_compile_Fuzz(t *testing.T) {
 		f.Fuzz(&authEngineName)
 
 		// Execute
-		compile(env, spec, specHash, tokenWrap, authEngineName)
+		compile(env, spec, specHash, tokenWrap, authEngineName, SourceInfo{})
 	}
 }
 
@@ -444,7 +444,7 @@ func Test_compile_spec_fields(t *testing.T) {
 				},
 			}
 
-			res, err := compile("production", def, "hash", false, tt.defaultAuthEngineName)
+			res, err := compile("production", def, "hash", false, tt.defaultAuthEngineName, SourceInfo{})
 			if err != nil {
 				t.Fatalf("compile() error = %v", err)
 			}
@@ -462,5 +462,64 @@ func Test_compile_spec_fields(t *testing.T) {
 				t.Errorf("ObjectName = %v, expectedHasEnv = %v", res.ObjectName, tt.expectedObjectNameHasEnv)
 			}
 		})
+	}
+}
+
+func Test_compile_sourceInfo(t *testing.T) {
+	def := &terraformerv1.AppRoleDefinition{
+		ApiVersion: "harp.elastic.co/terraformer/v1",
+		Kind:       "AppRoleDefinition",
+		Meta: &terraformerv1.AppRoleDefinitionMeta{
+			Name:        "foo",
+			Owner:       "security@elastic.co",
+			Description: "test",
+		},
+		Spec: &terraformerv1.AppRoleDefinitionSpec{
+			Selector: &terraformerv1.AppRoleDefinitionSelector{},
+		},
+	}
+
+	src := SourceInfo{
+		GitRepo:    "elastic/harp-plugins",
+		SourceFile: "terraformer/infra/vault/spec.yaml",
+	}
+
+	res, err := compile("production", def, "hash", false, "service", src)
+	if err != nil {
+		t.Fatalf("compile() error = %v", err)
+	}
+
+	if res.GitRepo != src.GitRepo {
+		t.Errorf("GitRepo = %q, want %q", res.GitRepo, src.GitRepo)
+	}
+	if res.SourceFile != src.SourceFile {
+		t.Errorf("SourceFile = %q, want %q", res.SourceFile, src.SourceFile)
+	}
+}
+
+func Test_compile_sourceInfo_empty(t *testing.T) {
+	def := &terraformerv1.AppRoleDefinition{
+		ApiVersion: "harp.elastic.co/terraformer/v1",
+		Kind:       "AppRoleDefinition",
+		Meta: &terraformerv1.AppRoleDefinitionMeta{
+			Name:        "foo",
+			Owner:       "security@elastic.co",
+			Description: "test",
+		},
+		Spec: &terraformerv1.AppRoleDefinitionSpec{
+			Selector: &terraformerv1.AppRoleDefinitionSelector{},
+		},
+	}
+
+	res, err := compile("production", def, "hash", false, "service", SourceInfo{})
+	if err != nil {
+		t.Fatalf("compile() error = %v", err)
+	}
+
+	if res.GitRepo != "" {
+		t.Errorf("GitRepo should be empty when SourceInfo is zero, got %q", res.GitRepo)
+	}
+	if res.SourceFile != "" {
+		t.Errorf("SourceFile should be empty when SourceInfo is zero, got %q", res.SourceFile)
 	}
 }

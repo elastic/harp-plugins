@@ -129,7 +129,7 @@ func pathCompiler(ring csov1.Ring, prefix []string, suffixFunc func() []*terrafo
 	return nil
 }
 
-func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool, defaultAuthEngineName string) (*tmplModel, error) {
+func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, noTokenWrap bool, defaultAuthEngineName string, src SourceInfo) (*tmplModel, error) {
 	// Check arguments
 	if err := validate(def); err != nil {
 		return nil, err
@@ -159,6 +159,9 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		DisableTokenWrap:         noTokenWrap,
 		DisableEnvironmentSuffix: disableEnvSuffix,
 		AuthEngineName:           authEngineName,
+		GitRepo:                  src.GitRepo,
+		SourceFile:               src.SourceFile,
+		SourceSHA256:             src.SourceSHA256,
 	}
 
 	if def.Spec.Namespaces != nil {
