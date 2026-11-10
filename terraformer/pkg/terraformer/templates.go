@@ -24,9 +24,12 @@ const ServiceTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -85,9 +88,12 @@ const AgentTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -139,14 +145,17 @@ resource "vault_approle_auth_backend_role" "agent-{{.ObjectName}}" {
 }
 `
 
-// PolicyTemplate is the TF >=0.12 Agent template.
+// PolicyTemplate is the TF >=0.12 Policy template.
 const PolicyTemplate = `# Generated with Harp Terraformer, Don't modify.
 # https://github.com/elastic/harp-plugins/tree/main/cmd/harp-terraformer
 # ---
 # SpecificationHash: "{{.SpecHash}}"
+# SourceSHA256: "{{.SourceSHA256}}"
 # Owner: "{{.Meta.Owner}}"
 # Date: "{{.Date}}"
-# Description: "{{.Meta.Description}}"
+# Description: "{{.Meta.Description}}"{{if .GitRepo}}
+# GitRepo: "{{.GitRepo}}"{{end}}{{if .SourceFile}}
+# SourceFile: "{{.SourceFile}}"{{end}}
 # Issues:{{range .Meta.Issues}}
 # - {{.}}{{ end }}
 # ---
@@ -183,8 +192,13 @@ resource "vault_policy" "policy-{{.ObjectName}}" {
 // -----------------------------------------------------------------------------
 
 type tmplModel struct {
-	// SpecHash contains base64 encoded sha256 hash of input specification.
+	// SpecHash contains the base64 encoded sha256 hash of the parsed (protobuf
+	// serialized) specification. It cannot be verified against the YAML file;
+	// use SourceSHA256 for that.
 	SpecHash string
+	// SourceSHA256 contains the hex encoded sha256 hash of the raw input
+	// specification bytes, verifiable with sha256sum.
+	SourceSHA256 string
 	// Meta contains specification metadata
 	Meta *terraformerv1.AppRoleDefinitionMeta
 	// Date contains the generation data as RFC822 string.
@@ -211,6 +225,10 @@ type tmplModel struct {
 	// TokenMaxTTL caps the maximum lifetime for issued tokens, in seconds.
 	// Zero means inherit the mount default.
 	TokenMaxTTL int64
+	// GitRepo is the "org/repo" name derived from the git remote (e.g. "elastic/harp-plugins").
+	GitRepo string
+	// SourceFile is the repo-relative path to the spec file that produced this output.
+	SourceFile string
 }
 
 type tmpSecretModel struct {
