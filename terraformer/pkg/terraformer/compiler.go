@@ -148,23 +148,9 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		objectName = slug.Make(def.Meta.Name)
 	}
 
-	var tokenTTL, tokenMaxTTL int64
-	if def.Spec.TokenTtl != "" {
-		d, err := time.ParseDuration(def.Spec.TokenTtl)
-		if err != nil {
-			return nil, fmt.Errorf("invalid token_ttl %q: %w", def.Spec.TokenTtl, err)
-		}
-		tokenTTL = int64(d.Seconds())
-	}
-	if def.Spec.TokenMaxTtl != "" {
-		d, err := time.ParseDuration(def.Spec.TokenMaxTtl)
-		if err != nil {
-			return nil, fmt.Errorf("invalid token_max_ttl %q: %w", def.Spec.TokenMaxTtl, err)
-		}
-		tokenMaxTTL = int64(d.Seconds())
-	}
-	if tokenTTL > 0 && tokenMaxTTL > 0 && tokenTTL > tokenMaxTTL {
-		return nil, fmt.Errorf("token_ttl (%ds) must not exceed token_max_ttl (%ds)", tokenTTL, tokenMaxTTL)
+	tokenTTL, tokenMaxTTL, err := parseTokenTTLs(def)
+	if err != nil {
+		return nil, err
 	}
 
 	res := &tmplModel{
@@ -201,6 +187,43 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 	}
 
 	// Process custom paths
+	customRules, err := buildCustomRules(def, res.Environment)
+	if err != nil {
+		return nil, err
+	}
+
+	// Assign result
+	if len(customRules) > 0 {
+		res.CustomRules = customRules
+	}
+
+	return res, nil
+}
+
+// parseTokenTTLs parses token_ttl and token_max_ttl (in seconds) from the spec.
+func parseTokenTTLs(def *terraformerv1.AppRoleDefinition) (ttl, maxTTL int64, err error) {
+	if def.Spec.TokenTtl != "" {
+		d, err := time.ParseDuration(def.Spec.TokenTtl)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid token_ttl %q: %w", def.Spec.TokenTtl, err)
+		}
+		ttl = int64(d.Seconds())
+	}
+	if def.Spec.TokenMaxTtl != "" {
+		d, err := time.ParseDuration(def.Spec.TokenMaxTtl)
+		if err != nil {
+			return 0, 0, fmt.Errorf("invalid token_max_ttl %q: %w", def.Spec.TokenMaxTtl, err)
+		}
+		maxTTL = int64(d.Seconds())
+	}
+	if ttl > 0 && maxTTL > 0 && ttl > maxTTL {
+		return 0, 0, fmt.Errorf("token_ttl (%ds) must not exceed token_max_ttl (%ds)", ttl, maxTTL)
+	}
+	return ttl, maxTTL, nil
+}
+
+// buildCustomRules renders the custom secret rules of the spec.
+func buildCustomRules(def *terraformerv1.AppRoleDefinition, env string) ([]tmpSecretModel, error) {
 	customRules := []tmpSecretModel{}
 	for _, customRule := range def.Spec.Custom {
 		// Check arguments
@@ -219,7 +242,7 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 		}
 
 		customPath, err := engine.Render(customRule.Suffix, map[string]interface{}{
-			"Env":      res.Environment,
+			"Env":      env,
 			"Selector": def.Spec.Selector,
 		})
 		if err != nil {
@@ -232,13 +255,7 @@ func compile(env string, def *terraformerv1.AppRoleDefinition, specHash string, 
 			Capabilities: filterCapabilities(customRule.Capabilities),
 		})
 	}
-
-	// Assign result
-	if len(customRules) > 0 {
-		res.CustomRules = customRules
-	}
-
-	return res, nil
+	return customRules, nil
 }
 
 // List of allowed capabilities
